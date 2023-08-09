@@ -1,0 +1,102 @@
+name: 'Build and install Arccore'
+description: 'A GH Actions to easily install Arccore from Arcane Framework'
+
+inputs:
+  source_dir:
+    description: '[IN] Directory with arccore sources'
+    type: string
+    required: true
+  build_dir:
+    description: '[OUT] Directory for build files'
+    type: string
+    required: true
+  install_dir:
+    description: '[OUT] Directory for install files'
+    type: string
+    required: true
+  arccon_install_dir:
+    description: '[IN] Directory with arccon installation'
+    type: string
+    required: true
+  cache_dir:
+    description: '[IN/OUT] Cache directory to accelerate compile time'
+    type: string
+    required: false
+  cmake_additionnal_args:
+    description: 'Additionnal arguments for configure'
+    type: string
+    required: false
+    default: ""
+  type_build:
+    description: 'Type of build (Debug, Check, Release)'
+    type: string
+    required: false
+    default: "Release"
+  compilo:
+    description: 'Compiler (GCC, CLang)'
+    type: string
+    required: false
+    default: "GCC"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set ccache var env
+      if: "${{ inputs.cache_dir != '' }}"
+      shell: bash
+      run: |
+        echo "CCACHE_COMPRESS=true" >> $GITHUB_ENV
+        echo "CCACHE_COMPRESSLEVEL=6" >> $GITHUB_ENV
+        echo "CCACHE_DIR=${{ inputs.cache_dir }}" >> $GITHUB_ENV
+        echo "CCACHE_MAXSIZE=5G" >> $GITHUB_ENV
+        echo "CMAKE_ADD_ARGS=-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+
+    - name: Compute build type
+      shell: bash
+      run: |
+        if [[ "${{ inputs.type_build }}" == "Check" ]]; then
+          CMAKE_BUILD_TYPE="Release"
+        else
+          CMAKE_BUILD_TYPE="${{ inputs.type_build }}"
+        fi
+        echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} \
+        -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
+        -DARCCORE_BUILD_MODE=${{ inputs.type_build }} \
+        " >> $GITHUB_ENV
+
+    - name: Personalize compiler
+      shell: bash
+      run: |
+        if [[ "${{ inputs.compilo }}" == "CLang" ]]; then
+          echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" >> $GITHUB_ENV
+        else
+          echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" >> $GITHUB_ENV
+        fi
+
+    - name: Configure arccore
+      shell: bash
+      run: |
+        cmake \
+        -S ${{ inputs.source_dir }} \
+        -B ${{ inputs.build_dir }} \
+        -GNinja \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_INSTALL_PREFIX=${{ inputs.install_dir }} \
+        -DArccon_DIR=${{ inputs.arccon_install_dir }}/share/cmake/Arccon \
+        ${{ inputs.cmake_additionnal_args }} \
+        ${{ env.CMAKE_ADD_ARGS }}
+
+    - name: Build arccore
+      shell: bash
+      run: |
+        cmake --build ${{ inputs.build_dir }}
+
+    - name: Install arccore
+      shell: bash
+      run: |
+        cmake --install ${{ inputs.build_dir }}
+
+    - name: Get ccache status
+      if: "${{ inputs.cache_dir != '' }}"
+      shell: bash
+      run: ccache -s

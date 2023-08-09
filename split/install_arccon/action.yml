@@ -1,0 +1,33 @@
+name: 'Build and install Arccon'
+description: 'A GH Actions to easily install Arccon from Arcane Framework'
+
+inputs:
+  source_dir:
+    description: '[IN] Directory with arccon sources'
+    type: string
+    required: true
+  build_dir:
+    description: '[OUT] Directory for build files'
+    type: string
+    required: true
+  install_dir:
+    description: '[OUT] Directory for install files'
+    type: string
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure arccon
+      shell: bash
+      run: |
+        cmake \
+        -S ${{ inputs.source_dir }} \
+        -B ${{ inputs.build_dir }} \
+        -GNinja \
+        -DCMAKE_INSTALL_PREFIX=${{ inputs.install_dir }}
+
+    - name: Install arccon
+      shell: bash
+      run: |
+        cmake --install ${{ inputs.build_dir }}

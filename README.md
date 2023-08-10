@@ -22,6 +22,9 @@ You have six composite actions to build and install the Arcane Framework.
 | `log_dir`  | Log directory to save logs. You can use `actions/upload-artifact` action to easily get the logs. If no value, the log will not moved from build folder. | No () |
 | `cmake_additionnal_args`  | Additionnal arguments given to CMake configure. Example: `'-DARCCORE_CXX_STANDARD=23 -DARCANE_DISABLE_PERFCOUNTER_TESTS=ON -DARCANE_DEFAULT_PARTITIONER=Metis'`  | No () |
 | `type_build`  | Type of build. You can choose `Debug`, `Check` or `Release`.  | No (`Release`) |
+| `use_ninja`  | Use ninja instead of make to build the Framework.  | No (`true`) |
+| `use_shared_libs`  | Generate shared libs instead of static libs.  | No (`true`) |
+| `verbose`  | Add verbose args for make/ninja.  | No (`false`) |
 | `compilo`  | Compiler to build the Framework. You can choose `GCC` or `Clang`. If you want an other compiler, you can use `cmake_additionnal_args` input.  | No (`GCC`) |
 | `with_cuda`  | Use CUDA to compile GPU part of the framework. Need `nvcc` compiler.  | No (`false`) |
 | `with_samples`  | Build samples.  | No (`false`) |

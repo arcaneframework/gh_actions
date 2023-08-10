@@ -40,7 +40,7 @@ inputs:
     type: boolean
     required: false
     default: true
-  use_shared_lib:
+  use_shared_libs:
     description: 'Use shared libs instead of static libs'
     type: boolean
     required: false
@@ -123,7 +123,7 @@ runs:
         echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -GNinja" >> $GITHUB_ENV
 
     - name: Use shared libs
-      if: "${{ inputs.use_shared_lib == 'true' }}"
+      if: "${{ inputs.use_shared_libs == 'true' }}"
       shell: bash
       run: |
         echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DBUILD_SHARED_LIBS=ON" >> $GITHUB_ENV

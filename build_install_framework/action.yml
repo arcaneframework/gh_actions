@@ -35,6 +35,21 @@ inputs:
     type: string
     required: false
     default: "Release"
+  use_ninja:
+    description: 'Use ninja instead of make'
+    type: boolean
+    required: false
+    default: true
+  use_shared_lib:
+    description: 'Use shared libs instead of static libs'
+    type: boolean
+    required: false
+    default: true
+  verbose:
+    description: 'Add verbose args for make/ninja'
+    type: boolean
+    required: false
+    default: false
   compilo:
     description: 'Compiler (GCC, CLang)'
     type: string
@@ -101,14 +116,30 @@ runs:
       run: |
         echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DCMAKE_INSTALL_PREFIX=${{ inputs.install_dir }}" >> $GITHUB_ENV
 
+    - name: Use ninja
+      if: "${{ inputs.use_ninja == 'true' }}"
+      shell: bash
+      run: |
+        echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -GNinja" >> $GITHUB_ENV
+
+    - name: Use shared libs
+      if: "${{ inputs.use_shared_lib == 'true' }}"
+      shell: bash
+      run: |
+        echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DBUILD_SHARED_LIBS=ON" >> $GITHUB_ENV
+
+    - name: Verbose building
+      if: "${{ inputs.verbose == 'true' }}"
+      shell: bash
+      run: |
+        echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DCMAKE_VERBOSE_MAKEFILE=TRUE" >> $GITHUB_ENV
+
     - name: Configure framework
       shell: bash
       run: |
         cmake \
         -S ${{ inputs.source_dir }} \
         -B ${{ inputs.build_dir }} \
-        -GNinja \
-        -DBUILD_SHARED_LIBS=ON \
         ${{ inputs.cmake_additionnal_args }} \
         ${{ env.CMAKE_ADD_ARGS }}
 

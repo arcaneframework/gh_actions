@@ -33,6 +33,11 @@ on:
         type: string
         required: false
         default: ''
+      verbose:
+        description: 'Add verbose args for make/ninja'
+        type: boolean
+        required: false
+        default: false
       with_samples:
         description: 'Compile samples too ?'
         type: boolean
@@ -142,6 +147,7 @@ jobs:
           cache_dir: ${{ env.CCACHE_DIR }}
           log_dir: ${{ env.LOG_DIR }}
           cmake_additionnal_args: '${{ inputs.cmake_additionnal_args }} ${{ env.m_rand }}'
+          verbose: ${{ inputs.verbose }}
           type_build: ${{ inputs.type_build }}
           compilo: ${{ inputs.compilo }}
           with_cuda: ${{ inputs.with_cuda }}

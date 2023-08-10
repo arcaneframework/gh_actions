@@ -91,6 +91,7 @@ jobs:
           echo "BUILD_DIR=${GITHUB_WORKSPACE}/build" >> $GITHUB_ENV
           echo "INSTALL_DIR=${GITHUB_WORKSPACE}/install" >> $GITHUB_ENV
           echo "CCACHE_DIR=${GITHUB_WORKSPACE}/ccache" >> $GITHUB_ENV
+          echo "LOG_DIR=${GITHUB_WORKSPACE}/log" >> $GITHUB_ENV
           echo "CT_RESULT_DIR=${GITHUB_WORKSPACE}/test" >> $GITHUB_ENV
 
       - name: Set MPICH as default MPI
@@ -139,18 +140,19 @@ jobs:
           build_dir: ${{ env.BUILD_DIR }}
           install_dir: ${{ env.INSTALL_DIR }}
           cache_dir: ${{ env.CCACHE_DIR }}
+          log_dir: ${{ env.LOG_DIR }}
           cmake_additionnal_args: '${{ inputs.cmake_additionnal_args }} ${{ env.m_rand }}'
           type_build: ${{ inputs.type_build }}
           compilo: ${{ inputs.compilo }}
           with_cuda: ${{ inputs.with_cuda }}
           with_samples: ${{ inputs.with_samples }}
 
-      - name: Upload build artifact
+      - name: Upload failure artifact
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ inputs.cache_key_prefix }}-build-artifact
-          path: ${{ env.BUILD_DIR }}/CMakeFiles
+          name: ${{ inputs.cache_key_prefix }}-failure_config_build-artifact
+          path: ${{ env.LOG_DIR }}
           retention-days: 7
 
 

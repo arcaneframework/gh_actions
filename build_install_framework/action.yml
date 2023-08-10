@@ -19,6 +19,12 @@ inputs:
     description: '[IN/OUT] Cache directory to accelerate compile time'
     type: string
     required: false
+    default: ""
+  log_dir:
+    description: '[OUT] Log directory to save logs'
+    type: string
+    required: false
+    default: ""
   cmake_additionnal_args:
     description: 'Additionnal arguments for configure'
     type: string
@@ -133,3 +139,12 @@ runs:
       if: "${{ inputs.cache_dir != '' }}"
       shell: bash
       run: ccache -s
+
+    - name: Save logs
+      if: ${{ always() && inputs.log_dir != '' }}
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.log_dir }}"
+        cp -r "${{ inputs.build_dir }}/CMakeFiles" "${{ inputs.log_dir }}" || true
+        cp "${{ inputs.build_dir }}/build.ninja" "${{ inputs.log_dir }}" || true
+        cp "${{ inputs.build_dir }}/CMakeCache.txt" "${{ inputs.log_dir }}" || true

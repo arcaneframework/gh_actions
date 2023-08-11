@@ -61,7 +61,7 @@ inputs:
     required: false
     default: false
   with_samples:
-    description: 'Compile samples too ?'
+    description: 'Compile samples too ? Require install_dir.'
     type: boolean
     required: false
     default: false
@@ -155,16 +155,20 @@ runs:
         cmake --install ${{ inputs.build_dir }}
 
     - name: Configure samples
-      if: "${{ inputs.with_samples == 'true' }}"
+      if: "${{ inputs.with_samples == 'true' && inputs.install_dir != '' }}"
       shell: bash
       run: |
-        cmake --build ${{ inputs.build_dir }} --target samples_configure
+        cmake \
+        -S ${{ inputs.build_dir }}/samples \
+        -B ${{ inputs.build_dir }}/builddir_samples \
+        ${{ inputs.cmake_additionnal_args }} \
+        ${{ env.ACTION_CMAKE_ADD_ARGS }}
 
     - name: Build samples
-      if: "${{ inputs.with_samples == 'true' }}"
+      if: "${{ inputs.with_samples == 'true' && inputs.install_dir != '' }}"
       shell: bash
       run: |
-        cmake --build ${{ inputs.build_dir }} --target samples_build
+        cmake --build ${{ inputs.build_dir }}/builddir_samples
 
     - name: Get ccache status
       if: "${{ inputs.cache_dir != '' }}"
@@ -179,3 +183,5 @@ runs:
         cp -r "${{ inputs.build_dir }}/CMakeFiles" "${{ inputs.log_dir }}" || true
         cp "${{ inputs.build_dir }}/build.ninja" "${{ inputs.log_dir }}" || true
         cp "${{ inputs.build_dir }}/CMakeCache.txt" "${{ inputs.log_dir }}" || true
+        mkdir -p "${{ inputs.log_dir }}/samples"
+        cp -r "${{ inputs.build_dir }}/builddir_samples/CMakeFiles" "${{ inputs.log_dir }}/samples" || true

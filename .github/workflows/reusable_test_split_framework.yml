@@ -118,14 +118,14 @@ jobs:
           submodules: true
 
       - name: Install Arccon
-        uses: arcaneframework/gh_actions/split/install_arccon@v1.0.0
+        uses: arcaneframework/gh_actions/split/install_arccon@v1.1.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}/arccon
           build_dir: ${{ env.BUILD_DIR }}/arccon
           install_dir: ${{ env.INSTALL_DIR }}/arccon
 
       - name: Install ArcDependencies
-        uses: arcaneframework/gh_actions/split/install_arcdependencies@v1.0.0
+        uses: arcaneframework/gh_actions/split/install_arcdependencies@v1.1.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}/dependencies
           build_dir: ${{ env.BUILD_DIR }}/dependencies
@@ -133,7 +133,7 @@ jobs:
           arccon_install_dir: ${{ env.INSTALL_DIR }}/arccon
 
       - name: Build and install AxlStar
-        uses: arcaneframework/gh_actions/split/build_install_axlstar@v1.0.0
+        uses: arcaneframework/gh_actions/split/build_install_axlstar@v1.1.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}/axlstar
           build_dir: ${{ env.BUILD_DIR }}/axlstar
@@ -142,7 +142,7 @@ jobs:
           arcdependencies_install_dir: ${{ env.INSTALL_DIR }}/dependencies
 
       - name: Build and install Arccore
-        uses: arcaneframework/gh_actions/split/build_install_arccore@v1.0.0
+        uses: arcaneframework/gh_actions/split/build_install_arccore@v1.1.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}/arccore
           build_dir: ${{ env.BUILD_DIR }}/arccore
@@ -162,7 +162,7 @@ jobs:
           retention-days: 7
 
       - name: Build and install Arcane
-        uses: arcaneframework/gh_actions/split/build_install_arcane@v1.0.0
+        uses: arcaneframework/gh_actions/split/build_install_arcane@v1.1.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}/arcane
           build_dir: ${{ env.BUILD_DIR }}/arcane

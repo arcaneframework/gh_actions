@@ -39,7 +39,7 @@ on:
         required: false
         default: false
       with_samples:
-        description: 'Compile samples too ?'
+        description: 'Compile samples too ? Require install_dir.'
         type: boolean
         required: false
         default: true
@@ -111,6 +111,18 @@ jobs:
           update-alternatives --set parmetis /usr/local/parmetis_mpich/include/parmetis.h
           mpirun --version
 
+      - name: Add some args for MPI (Usefull with Ubuntu 22.04 + MPICH + CLang)
+        shell: bash
+        run: |
+          echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} \
+          -DMPI_SKIP_COMPILER_WRAPPER=TRUE \
+          -DCMAKE_INCLUDE_PATH=/usr/include/x86_64-linux-gnu/mpi \
+          -DMPI_C_LIB_NAMES=mpi \
+          -DMPI_CXX_LIB_NAMES=mpi \
+          -DMPI_mpi_LIBRARY=/usr/lib/x86_64-linux-gnu/libmpi.so \
+          -DMPI_backtrace_LIBRARY=/usr/lib/x86_64-linux-gnu/libmpi.so \
+          " >> $GITHUB_ENV
+
       - name: Get date
         shell: bash
         run: |
@@ -136,7 +148,7 @@ jobs:
           chmod u+x ${{ env.SOURCE_DIR }}/.github/scripts/rand_pkg.sh
           MRAND=$(${{ env.SOURCE_DIR }}/.github/scripts/rand_pkg.sh)
           echo "$MRAND"
-          echo "m_rand=$MRAND" >> $GITHUB_ENV
+          echo "M_RAND=$MRAND" >> $GITHUB_ENV
 
       - name: Build and install framework
         uses: arcaneframework/gh_actions/build_install_framework@v1.1.0
@@ -146,7 +158,7 @@ jobs:
           install_dir: ${{ env.INSTALL_DIR }}
           cache_dir: ${{ env.CCACHE_DIR }}
           log_dir: ${{ env.LOG_DIR }}
-          cmake_additionnal_args: '${{ inputs.cmake_additionnal_args }} ${{ env.m_rand }}'
+          cmake_additionnal_args: '${{ env.CMAKE_ADD_ARGS }} ${{ inputs.cmake_additionnal_args }} ${{ env.M_RAND }}'
           verbose: ${{ inputs.verbose }}
           type_build: ${{ inputs.type_build }}
           compilo: ${{ inputs.compilo }}

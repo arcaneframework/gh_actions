@@ -87,7 +87,7 @@ jobs:
           echo "CCACHE_DIR=${GITHUB_WORKSPACE}/ccache" >> $GITHUB_ENV
           echo "CT_RESULT_DIR=${GITHUB_WORKSPACE}/test" >> $GITHUB_ENV
 
-      - name: Set MPICH
+      - name: Set MPICH as default MPI
         if: "${{ inputs.mpi == 'MPICH' }}"
         shell: bash
         run: |
@@ -98,6 +98,18 @@ jobs:
           update-alternatives --set mpi-x86_64-linux-gnu /usr/include/x86_64-linux-gnu/mpich
           update-alternatives --set parmetis /usr/local/parmetis_mpich/include/parmetis.h
           mpirun --version
+
+      - name: Add some args for MPI (Usefull with Ubuntu 22.04 + MPICH + CLang)
+        shell: bash
+        run: |
+          echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} \
+          -DMPI_SKIP_COMPILER_WRAPPER=TRUE \
+          -DCMAKE_INCLUDE_PATH=/usr/include/x86_64-linux-gnu/mpi \
+          -DMPI_C_LIB_NAMES=mpi \
+          -DMPI_CXX_LIB_NAMES=mpi \
+          -DMPI_mpi_LIBRARY=/usr/lib/x86_64-linux-gnu/libmpi.so \
+          -DMPI_backtrace_LIBRARY=/usr/lib/x86_64-linux-gnu/libmpi.so \
+          " >> $GITHUB_ENV
 
       - name: Get date
         shell: bash
@@ -149,7 +161,7 @@ jobs:
           install_dir: ${{ env.INSTALL_DIR }}/arccore
           arccon_install_dir: ${{ env.INSTALL_DIR }}/arccon
           cache_dir: ${{ env.CCACHE_DIR }}
-          cmake_additionnal_args: ${{ inputs.cmake_additionnal_args }}
+          cmake_additionnal_args: '${{ env.CMAKE_ADD_ARGS }} ${{ inputs.cmake_additionnal_args }}'
           type_build: ${{ inputs.type_build }}
           compilo: ${{ inputs.compilo }}
 
@@ -172,7 +184,7 @@ jobs:
           axlstar_install_dir: ${{ env.INSTALL_DIR }}/axlstar
           arccore_install_dir: ${{ env.INSTALL_DIR }}/arccore
           cache_dir: ${{ env.CCACHE_DIR }}
-          cmake_additionnal_args: ${{ inputs.cmake_additionnal_args }}
+          cmake_additionnal_args: '${{ env.CMAKE_ADD_ARGS }} ${{ inputs.cmake_additionnal_args }}'
           type_build: ${{ inputs.type_build }}
           compilo: ${{ inputs.compilo }}
           with_cuda: ${{ inputs.with_cuda }}

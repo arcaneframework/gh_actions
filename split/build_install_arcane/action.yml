@@ -14,6 +14,11 @@ inputs:
     description: '[OUT] Directory for install files'
     type: string
     required: true
+  log_dir:
+    description: '[OUT] Log directory to save logs'
+    type: string
+    required: false
+    default: ""
   arccon_install_dir:
     description: '[IN] Directory with arccon installation'
     type: string
@@ -44,6 +49,21 @@ inputs:
     type: string
     required: false
     default: "Release"
+  use_ninja:
+    description: 'Use ninja instead of make'
+    type: boolean
+    required: false
+    default: true
+  use_shared_libs:
+    description: 'Use shared libs instead of static libs'
+    type: boolean
+    required: false
+    default: true
+  verbose:
+    description: 'Add verbose args for make/ninja'
+    type: boolean
+    required: false
+    default: false
   compilo:
     description: 'Compiler (GCC, CLang)'
     type: string
@@ -103,6 +123,24 @@ runs:
       run: |
         echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DARCANE_ACCELERATOR_MODE=CUDANVCC -DCMAKE_CUDA_COMPILER=nvcc" >> $GITHUB_ENV
 
+    - name: Use ninja
+      if: "${{ inputs.use_ninja == 'true' }}"
+      shell: bash
+      run: |
+        echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -GNinja" >> $GITHUB_ENV
+
+    - name: Use shared libs
+      if: "${{ inputs.use_shared_libs == 'true' }}"
+      shell: bash
+      run: |
+        echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DBUILD_SHARED_LIBS=ON" >> $GITHUB_ENV
+
+    - name: Verbose building
+      if: "${{ inputs.verbose == 'true' }}"
+      shell: bash
+      run: |
+        echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_VERBOSE_MAKEFILE=TRUE" >> $GITHUB_ENV
+
     - name: Configure arcane
       shell: bash
       run: |
@@ -149,3 +187,14 @@ runs:
       if: "${{ inputs.cache_dir != '' }}"
       shell: bash
       run: ccache -s
+
+    - name: Save logs
+      if: ${{ always() && inputs.log_dir != '' }}
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.log_dir }}"
+        cp -r "${{ inputs.build_dir }}/CMakeFiles" "${{ inputs.log_dir }}" || true
+        cp "${{ inputs.build_dir }}/build.ninja" "${{ inputs.log_dir }}" || true
+        cp "${{ inputs.build_dir }}/CMakeCache.txt" "${{ inputs.log_dir }}" || true
+        mkdir -p "${{ inputs.log_dir }}/samples"
+        cp -r "${{ inputs.build_dir }}/builddir_samples/CMakeFiles" "${{ inputs.log_dir }}/samples" || true

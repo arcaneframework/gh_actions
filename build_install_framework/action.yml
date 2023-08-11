@@ -15,13 +15,13 @@ inputs:
     type: string
     required: false
     default: ""
-  cache_dir:
-    description: '[IN/OUT] Cache directory to accelerate compile time'
+  log_dir:
+    description: '[OUT] Log directory to save logs'
     type: string
     required: false
     default: ""
-  log_dir:
-    description: '[OUT] Log directory to save logs'
+  cache_dir:
+    description: '[IN/OUT] Cache directory to accelerate compile time'
     type: string
     required: false
     default: ""

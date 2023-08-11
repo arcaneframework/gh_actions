@@ -14,6 +14,11 @@ inputs:
     description: '[OUT] Directory for install files'
     type: string
     required: true
+  log_dir:
+    description: '[OUT] Log directory to save logs'
+    type: string
+    required: false
+    default: ""
   arccon_install_dir:
     description: '[IN] Directory with arccon installation'
     type: string
@@ -32,6 +37,21 @@ inputs:
     type: string
     required: false
     default: "Release"
+  use_ninja:
+    description: 'Use ninja instead of make'
+    type: boolean
+    required: false
+    default: true
+  use_shared_libs:
+    description: 'Use shared libs instead of static libs'
+    type: boolean
+    required: false
+    default: true
+  verbose:
+    description: 'Add verbose args for make/ninja'
+    type: boolean
+    required: false
+    default: false
   compilo:
     description: 'Compiler (GCC, CLang)'
     type: string
@@ -49,7 +69,7 @@ runs:
         echo "CCACHE_COMPRESSLEVEL=6" >> $GITHUB_ENV
         echo "CCACHE_DIR=${{ inputs.cache_dir }}" >> $GITHUB_ENV
         echo "CCACHE_MAXSIZE=5G" >> $GITHUB_ENV
-        echo "CMAKE_ADD_ARGS=-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "ACTION_CMAKE_ADD_ARGS=-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
 
     - name: Compute build type
       shell: bash
@@ -59,7 +79,7 @@ runs:
         else
           CMAKE_BUILD_TYPE="${{ inputs.type_build }}"
         fi
-        echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} \
+        echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
         -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
         -DARCCORE_BUILD_MODE=${{ inputs.type_build }} \
         " >> $GITHUB_ENV
@@ -68,10 +88,28 @@ runs:
       shell: bash
       run: |
         if [[ "${{ inputs.compilo }}" == "CLang" ]]; then
-          echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" >> $GITHUB_ENV
+          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" >> $GITHUB_ENV
         else
-          echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" >> $GITHUB_ENV
+          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" >> $GITHUB_ENV
         fi
+
+    - name: Use ninja
+      if: "${{ inputs.use_ninja == 'true' }}"
+      shell: bash
+      run: |
+        echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -GNinja" >> $GITHUB_ENV
+
+    - name: Use shared libs
+      if: "${{ inputs.use_shared_libs == 'true' }}"
+      shell: bash
+      run: |
+        echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DBUILD_SHARED_LIBS=ON" >> $GITHUB_ENV
+
+    - name: Verbose building
+      if: "${{ inputs.verbose == 'true' }}"
+      shell: bash
+      run: |
+        echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_VERBOSE_MAKEFILE=TRUE" >> $GITHUB_ENV
 
     - name: Configure arccore
       shell: bash
@@ -84,7 +122,7 @@ runs:
         -DCMAKE_INSTALL_PREFIX=${{ inputs.install_dir }} \
         -DArccon_DIR=${{ inputs.arccon_install_dir }}/share/cmake/Arccon \
         ${{ inputs.cmake_additionnal_args }} \
-        ${{ env.CMAKE_ADD_ARGS }}
+        ${{ env.ACTION_CMAKE_ADD_ARGS }}
 
     - name: Build arccore
       shell: bash
@@ -100,3 +138,12 @@ runs:
       if: "${{ inputs.cache_dir != '' }}"
       shell: bash
       run: ccache -s
+
+    - name: Save logs
+      if: ${{ always() && inputs.log_dir != '' }}
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.log_dir }}"
+        cp -r "${{ inputs.build_dir }}/CMakeFiles" "${{ inputs.log_dir }}" || true
+        cp "${{ inputs.build_dir }}/build.ninja" "${{ inputs.log_dir }}" || true
+        cp "${{ inputs.build_dir }}/CMakeCache.txt" "${{ inputs.log_dir }}" || true

@@ -28,6 +28,8 @@ You have six composite actions to build and install the Arcane Framework.
 | `compilo`  | Compiler to build the Framework. You can choose `GCC` or `Clang`. If you want an other compiler, you can use `cmake_additionnal_args` input.  | No (`GCC`) |
 | `with_cuda`  | Use CUDA to compile GPU part of the framework. Need `nvcc` compiler.  | No (`false`) |
 | `with_samples`  | Build samples. Need an `install_dir`. | No (`false`) |
+| `with_userdoc`  | Build the user documentation. Available in `build_dir/share/userdoc`. | No (`false`) |
+| `with_devdoc`  | Build the dev documentation. Available in `build_dir/share/devdoc`. | No (`false`) |
 
 ### Example for the first composite action:
 https://github.com/arcaneframework/gh_actions/blob/master/.github/workflows/reusable_test_framework.yml

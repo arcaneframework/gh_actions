@@ -65,7 +65,16 @@ inputs:
     type: boolean
     required: false
     default: false
-
+  with_userdoc:
+    description: 'Build the user documentation'
+    type: boolean
+    required: false
+    default: false
+  with_devdoc:
+    description: 'Build the developer documentation'
+    type: boolean
+    required: false
+    default: false
 
 runs:
   using: "composite"
@@ -153,6 +162,18 @@ runs:
       shell: bash
       run: |
         cmake --install ${{ inputs.build_dir }}
+
+    - name: Build userdoc
+      if: "${{ inputs.with_userdoc == 'true' }}"
+      shell: bash
+      run: |
+        cmake --build ${{ inputs.build_dir }} --target userdoc
+
+    - name: Build devdoc
+      if: "${{ inputs.with_devdoc == 'true' }}"
+      shell: bash
+      run: |
+        cmake --build ${{ inputs.build_dir }} --target devdoc
 
     - name: Configure samples
       if: "${{ inputs.with_samples == 'true' && inputs.install_dir != '' }}"

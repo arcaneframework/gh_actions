@@ -79,7 +79,8 @@ env:
   # OpenMPI
   OMPI_ALLOW_RUN_AS_ROOT: 1
   OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
-
+  # To tell OpenMPI we may use more processus than available cores
+  OMPI_MCA_rmaps_base_oversubscribe : true
 
 jobs:
   build-install-test:

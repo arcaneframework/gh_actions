@@ -75,6 +75,11 @@ inputs:
     type: boolean
     required: false
     default: false
+  with_aliendoc:
+    description: 'Build the Alien documentation'
+    type: boolean
+    required: false
+    default: false
 
 runs:
   using: "composite"
@@ -143,6 +148,12 @@ runs:
       run: |
         echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_VERBOSE_MAKEFILE=TRUE" >> $GITHUB_ENV
 
+    - name: Add Alien doc generation
+      if: "${{ inputs.with_aliendoc == 'true' }}"
+      shell: bash
+      run: |
+        echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DALIEN_GENERATE_DOCUMENTATION=ON" >> $GITHUB_ENV
+
     - name: Configure framework
       shell: bash
       run: |
@@ -175,6 +186,12 @@ runs:
       run: |
         cmake --build ${{ inputs.build_dir }} --target devdoc
 
+    - name: Build aliendoc
+      if: "${{ inputs.with_aliendoc == 'true' }}"
+      shell: bash
+      run: |
+        cmake --build ${{ inputs.build_dir }} --target aliendoc
+        
     - name: Configure samples
       if: "${{ inputs.with_samples == 'true' && inputs.install_dir != '' }}"
       shell: bash

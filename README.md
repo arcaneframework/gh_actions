@@ -1,5 +1,8 @@
 # GitHub Actions : Reusable and composite actions
 
+## When updating tags
+In `.github/workflows/`, action tags need to be updated.
+
 ## Composite actions
 You have six composite actions to build and install the Arcane Framework.
 

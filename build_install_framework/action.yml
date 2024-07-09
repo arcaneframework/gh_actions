@@ -154,6 +154,15 @@ runs:
       run: |
         echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DALIEN_GENERATE_DOCUMENTATION=ON" >> $GITHUB_ENV
 
+    - name: Set debug mode for ccache
+      if: "${{ inputs.log_dir != '' }}"
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.log_dir }}/ccache"
+        echo "CCACHE_DEBUG=true" >> $GITHUB_ENV
+        echo "CCACHE_DEBUGDIR=${{ inputs.log_dir }}/ccache" >> $GITHUB_ENV
+        echo "CCACHE_DEBUGLEVEL=1" >> $GITHUB_ENV
+
     - name: Configure framework
       shell: bash
       run: |

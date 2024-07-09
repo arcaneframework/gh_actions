@@ -3,17 +3,11 @@
 ## When updating tags
 In `.github/workflows/`, action tags need to be updated.
 
-## Composite actions
-You have six composite actions to build and install the Arcane Framework.
+## Composite action
+You have a composite action to build and install the Arcane Framework.
 
-- One composite action allowing you to build and install all of the Framework. This is the recommended method to use the Framework :
-  - `arcaneframework/gh_actions/build_install_framework@v1`
-- Five composite actions are available to build all Framework parts (one action per part) (soon deprecated) :
-  - `arcaneframework/gh_actions/split/install_arccon@v1`
-  - `arcaneframework/gh_actions/split/install_arcdependencies@v1`
-  - `arcaneframework/gh_actions/split/build_install_axlstar@v1`
-  - `arcaneframework/gh_actions/split/build_install_arccore@v1`
-  - `arcaneframework/gh_actions/split/build_install_arcane@v1`
+This composite action allowing you to build and install all of the Framework :
+  - `arcaneframework/gh_actions/build_install_framework@v2`
 
 ### Available inputs for the first composite action:
 | Input | Description | Required (Default value) |
@@ -35,7 +29,7 @@ You have six composite actions to build and install the Arcane Framework.
 | `with_devdoc`  | Build the dev documentation. Available in `build_dir/share/devdoc`. | No (`false`) |
 | `with_aliendoc`  | Build the Alien documentation. Available in `build_dir/share/aliendoc`. | No (`false`) |
 
-### Example for the first composite action:
+### Example for the composite action:
 https://github.com/arcaneframework/gh_actions/blob/master/.github/workflows/reusable_test_framework.yml
 ```yml
 env:
@@ -48,7 +42,7 @@ jobs:
     name: 'Build, install and test Arcane Framework'
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/arcaneframework/ubuntu-2204:gcc-12_clang-16_minimal_20230808
+      image: ghcr.io/arcaneframework/ubuntu-2404:gcc-14_clang-18_minimal_20240709
     steps:
       - name: Define environment paths
         shell: bash
@@ -59,14 +53,14 @@ jobs:
           echo "CCACHE_DIR=${GITHUB_WORKSPACE}/ccache" >> $GITHUB_ENV
 
       - name: Checkout framework
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 'arcaneframework/framework'
           path: ${{ env.SOURCE_DIR }}
           submodules: true
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v1
+        uses: arcaneframework/gh_actions/build_install_framework@v2
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
@@ -79,13 +73,9 @@ jobs:
           with_samples: false
 ```
 
-### Example for the last composite actions:
-https://github.com/arcaneframework/gh_actions/blob/master/.github/workflows/reusable_test_split_framework.yml
-
 ## Reusable actions
-You have two reusable actions to test the Arcane Framework :
+You have a reusable action to test the Arcane Framework :
 - `arcaneframework/gh_actions/.github/workflows/reusable_test_framework.yml@v1`
-- `arcaneframework/gh_actions/.github/workflows/reusable_test_split_framework.yml@v1`
 
 Before using it, you can read this Github Docs page : https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow
 
@@ -98,9 +88,9 @@ https://github.com/arcaneframework/framework/blob/main/.github/workflows/build_t
 jobs:
   build-install-test:
     name: '[U22_G12_C16_M]_CLang_OpenMPI_Release'
-    uses: 'arcaneframework/gh_actions/.github/workflows/reusable_test_framework.yml@v1'
+    uses: 'arcaneframework/gh_actions/.github/workflows/reusable_test_framework.yml@v2'
     with:
-      image: ghcr.io/arcaneframework/ubuntu-2204:gcc-12_clang-16_minimal_20230808
+      image: ghcr.io/arcaneframework/ubuntu-2404:gcc-14_clang-18_minimal_20240709
       compilo: CLang
       mpi: OpenMPI
       with_cuda: false

@@ -141,8 +141,9 @@ jobs:
           echo "$MRAND"
           echo "M_RAND=$MRAND" >> $GITHUB_ENV
 
+      # TODO : Tag à changer avant de merger !!!
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v2.0.0
+        uses: arcaneframework/gh_actions/build_install_framework@dev/ah-prepare-v2
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}

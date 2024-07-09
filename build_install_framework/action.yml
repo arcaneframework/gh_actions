@@ -25,6 +25,11 @@ inputs:
     type: string
     required: false
     default: ""
+  max_size_cache_dir:
+    description: 'Max size of cache directory (use ccache syntax)'
+    type: string
+    required: false
+    default: "5G"
   cmake_additionnal_args:
     description: 'Additionnal arguments for configure'
     type: string
@@ -91,7 +96,7 @@ runs:
         echo "CCACHE_COMPRESS=true" >> $GITHUB_ENV
         echo "CCACHE_COMPRESSLEVEL=6" >> $GITHUB_ENV
         echo "CCACHE_DIR=${{ inputs.cache_dir }}" >> $GITHUB_ENV
-        echo "CCACHE_MAXSIZE=5G" >> $GITHUB_ENV
+        echo "CCACHE_MAXSIZE=${{ inputs.max_size_cache_dir }}" >> $GITHUB_ENV
         echo "ACTION_CMAKE_ADD_ARGS=-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
 
     - name: Compute build type

@@ -9,6 +9,8 @@ You have a composite action to build and install the Arcane Framework.
 This composite action allowing you to build and install all of the Framework :
   - `arcaneframework/gh_actions/build_install_framework@v2`
 
+This composite action can work with any docker image with the necessary/recommended Arcane dependencies (see [documentation](https://arcaneframework.github.io/arcane/userdoc/html/d0/d6e/arcanedoc_build_install_prerequisites.html) for more information).
+
 ### Available inputs for the first composite action:
 | Input | Description | Required (Default value) |
 | :---: |    :---:    | :---: |
@@ -16,6 +18,7 @@ This composite action allowing you to build and install all of the Framework :
 | `build_dir`  | Directory for build files. No need to create this folder before.  | Yes |
 | `install_dir`  | Directory for installation files. No need to create this folder before. If it is empty, the installation will not proceed. | No () |
 | `cache_dir`  | Cache directory to speed up compilation. You can use the `actions/cache` action to save/restore this folder for a future build. If it is empty, ccache will not be used. | No () |
+| `max_size_cache_dir`  | Max size for the `cache_dir` directory. | No (`5G`) |
 | `log_dir`  | Log directory to save logs. You can use the `actions/upload-artifact` action to easily get the logs. If no value is given, the log will not be moved from the build folder. | No () |
 | `cmake_additionnal_args`  | Additional arguments given to CMake configure. Example: `'-DARCCORE_CXX_STANDARD=23 -DARCANE_DISABLE_PERFCOUNTER_TESTS=ON -DARCANE_DEFAULT_PARTITIONER=Metis'`  | No () |
 | `type_build`  | Type of build. You can choose `Debug`, `Check` or `Release`.  | No (`Release`) |
@@ -80,6 +83,8 @@ You have a reusable action to test the Arcane Framework :
 Before using it, you can read this Github Docs page : https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow
 
 There are several 'input' options. To find out the available options, you can read the YAML action file.
+
+This reusable action can work only with [framework-ci](https://github.com/arcaneframework/framework-ci) images. The reusable actions version 1 can work with all framework-ci images `20240703` or before. The reusable action version 2 need framework-ci images `20240709` and after.
 
 
 ### Example:

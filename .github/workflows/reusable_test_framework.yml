@@ -104,25 +104,15 @@ jobs:
         if: "${{ inputs.mpi == 'MPICH' }}"
         shell: bash
         run: |
-          update-alternatives --set mpirun /usr/bin/mpirun.mpich
-          update-alternatives --set mpi /usr/bin/mpicc.mpich
-          update-alternatives --set h5pcc /usr/bin/h5pcc.mpich
-          update-alternatives --set hdf5.pc /usr/lib/x86_64-linux-gnu/pkgconfig/hdf5-mpich.pc
-          update-alternatives --set mpi-x86_64-linux-gnu /usr/include/x86_64-linux-gnu/mpich
-          update-alternatives --set parmetis /usr/local/parmetis_mpich/include/parmetis.h
-          mpirun --version
+          source /root/scripts/usefull_functions.sh
+          use_mpich
 
-      - name: Add some args for MPI (Usefull with Ubuntu 22.04 + MPICH + CLang)
+      - name: Set OpenMPI as default MPI
+        if: "${{ inputs.mpi == 'OpenMPI' }}"
         shell: bash
         run: |
-          echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} \
-          -DMPI_SKIP_COMPILER_WRAPPER=TRUE \
-          -DCMAKE_INCLUDE_PATH=/usr/include/x86_64-linux-gnu/mpi \
-          -DMPI_C_LIB_NAMES=mpi \
-          -DMPI_CXX_LIB_NAMES=mpi \
-          -DMPI_mpi_LIBRARY=/usr/lib/x86_64-linux-gnu/libmpi.so \
-          -DMPI_backtrace_LIBRARY=/usr/lib/x86_64-linux-gnu/libmpi.so \
-          " >> $GITHUB_ENV
+          source /root/scripts/usefull_functions.sh
+          use_openmpi
 
       - name: Get date
         shell: bash
@@ -152,7 +142,7 @@ jobs:
           echo "M_RAND=$MRAND" >> $GITHUB_ENV
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v1.6.0
+        uses: arcaneframework/gh_actions/build_install_framework@v2.0.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}

@@ -56,10 +56,10 @@ inputs:
     required: false
     default: false
   compilo:
-    description: 'Compiler (GCC, CLang)'
+    description: 'Compiler (gcc, clang)'
     type: string
     required: false
-    default: "GCC"
+    default: "gcc"
   with_cuda:
     description: 'Compile with CUDA too ?'
     type: boolean
@@ -116,7 +116,7 @@ runs:
     - name: Personalize compiler
       shell: bash
       run: |
-        if [[ "${{ inputs.compilo }}" == "CLang" ]]; then
+        if [[ "${{ inputs.compilo }}" == "clang" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" >> $GITHUB_ENV
         else
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" >> $GITHUB_ENV

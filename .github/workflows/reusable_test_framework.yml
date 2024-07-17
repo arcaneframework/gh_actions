@@ -8,21 +8,26 @@ on:
         type: string
         required: true
 
-      compilo:
-        description: 'Compiler (GCC, CLang)'
+      compilo_name:
+        description: 'Compiler name (gcc, clang)'
         type: string
         required: false
-        default: 'GCC'
+        default: 'gcc'
+      compilo_version:
+        description: 'Compiler version (12, 16, ...)'
+        type: string
+        required: false
+        default: ''
       mpi:
-        description: 'MPI (OpenMPI, MPICH)'
+        description: 'MPI (OMPI, MPICH)'
         type: string
         required: false
-        default: 'OpenMPI'
-      with_cuda:
-        description: 'Compile with CUDA too ?'
-        type: boolean
+        default: 'OMPI'
+      cuda:
+        description: 'CUDA version (cuda-XXX or false)'
+        type: string
         required: false
-        default: false
+        default: 'false'
       type_build:
         description: 'Type of build (Debug, Check, Release)'
         type: string
@@ -104,15 +109,28 @@ jobs:
         if: "${{ inputs.mpi == 'MPICH' }}"
         shell: bash
         run: |
-          source /root/scripts/usefull_functions.sh
-          use_mpich
+          source /root/scripts/use_mpich.sh
 
       - name: Set OpenMPI as default MPI
-        if: "${{ inputs.mpi == 'OpenMPI' }}"
+        if: "${{ inputs.mpi == 'OMPI' }}"
         shell: bash
         run: |
-          source /root/scripts/usefull_functions.sh
-          use_openmpi
+          source /root/scripts/use_openmpi.sh
+
+      - name: Set C++ compiler
+        shell: bash
+        run: |
+          if [[ "${{ inputs.compilo_version }}" == "" ]]; then
+            source /root/scripts/use_${{inputs.compilo_name}}.sh
+          else
+            source /root/scripts/use_${{inputs.compilo_name}}-${{inputs.compilo_version}}.sh
+          fi
+
+      - name: Set CUDA
+        if: "${{ inputs.cuda != 'false' }}"
+        shell: bash
+        run: |
+          source /root/scripts/use_${{inputs.cuda}}.sh
 
       - name: Get date
         shell: bash
@@ -150,11 +168,12 @@ jobs:
           install_dir: ${{ env.INSTALL_DIR }}
           log_dir: ${{ env.LOG_DIR }}
           cache_dir: ${{ env.CCACHE_DIR }}
+          max_size_cache_dir: 1G
           cmake_additionnal_args: '${{ env.CMAKE_ADD_ARGS }} ${{ inputs.cmake_additionnal_args }} ${{ env.M_RAND }}'
           verbose: ${{ inputs.verbose }}
           type_build: ${{ inputs.type_build }}
-          compilo: ${{ inputs.compilo }}
-          with_cuda: ${{ inputs.with_cuda }}
+          compilo: ${{ inputs.compilo_name }}
+          with_cuda: ${{ inputs.cuda != "false" }}
           with_samples: ${{ inputs.with_samples }}
 
       - name: Upload failure artifact

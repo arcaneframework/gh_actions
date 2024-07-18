@@ -173,7 +173,7 @@ jobs:
           verbose: ${{ inputs.verbose }}
           type_build: ${{ inputs.type_build }}
           compilo: ${{ inputs.compilo_name }}
-          with_cuda: ${{ inputs.cuda != "false" }}
+          with_cuda: ${{ inputs.cuda != 'false' }}
           with_samples: ${{ inputs.with_samples }}
 
       - name: Upload failure artifact

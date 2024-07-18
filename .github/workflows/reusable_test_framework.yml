@@ -69,6 +69,11 @@ on:
         type: string
         required: false
         default: ''
+      ctest_additionnal_args:
+        description: 'Additionnal arguments for testing'
+        type: string
+        required: false
+        default: ''
 
       cache_key_prefix:
         description: 'Cache key prefix'
@@ -190,7 +195,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p ${{ env.CT_RESULT_DIR }}
-          ARCANE_CHECK=1 ctest --test-dir ${{ env.BUILD_DIR }} --output-junit ${{ env.CT_RESULT_DIR }}/results.xml ${{ env.CT_OPTS }} -E '${{inputs.excluded_tests}}' -LE '${{inputs.excluded_tests_with_labels}}'
+          ARCANE_CHECK=1 ctest --test-dir ${{ env.BUILD_DIR }} --output-junit ${{ env.CT_RESULT_DIR }}/results.xml ${{ env.CT_OPTS }} -E '${{inputs.excluded_tests}}' -LE '${{inputs.excluded_tests_with_labels}}' ${{inputs.ctest_additionnal_args}}
 
       - name: Upload test artifact
         if: failure()

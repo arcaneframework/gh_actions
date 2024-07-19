@@ -102,10 +102,15 @@ jobs:
       image: ${{inputs.image}}
 
     steps:
-      - name: Display CPU Infos
+      - name: Display CPU infos
         shell: bash
         run: |
           cat /proc/cpuinfo
+
+      - name: Display disks infos
+        shell: bash
+        run: |
+          df -h
 
       - name: Define environment paths
         shell: bash
@@ -197,6 +202,10 @@ jobs:
           path: ${{ env.LOG_DIR }}
           retention-days: 7
 
+      - name: Display disks infos
+        shell: bash
+        run: |
+          df -h
 
       - name: Test
         if: ${{ inputs.execute_tests }}
@@ -204,6 +213,11 @@ jobs:
         run: |
           mkdir -p ${{ env.CT_RESULT_DIR }}
           ARCANE_CHECK=1 ctest --test-dir ${{ env.BUILD_DIR }} --output-junit ${{ env.CT_RESULT_DIR }}/results.xml  --output-on-failure -E '${{inputs.excluded_tests}}' -LE '${{inputs.excluded_tests_with_labels}}' ${{inputs.ctest_additionnal_args}}
+
+      - name: Display disks infos
+        shell: bash
+        run: |
+          df -h
 
       - name: Upload test artifact
         if: failure()

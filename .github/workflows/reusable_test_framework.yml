@@ -28,6 +28,11 @@ on:
         type: string
         required: false
         default: 'false'
+      use_acpp:
+        description: 'Use AdaptiveCPP ?'
+        type: boolean
+        required: false
+        default: false
       type_build:
         description: 'Type of build (Debug, Check, Release)'
         type: string
@@ -179,6 +184,7 @@ jobs:
           type_build: ${{ inputs.type_build }}
           compilo: ${{ inputs.compilo_name }}
           with_cuda: ${{ inputs.cuda != 'false' }}
+          with_acpp: ${{ inputs.use_acpp }}
           with_samples: ${{ inputs.with_samples }}
 
       - name: Upload failure artifact

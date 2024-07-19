@@ -65,6 +65,11 @@ inputs:
     type: boolean
     required: false
     default: false
+  with_acpp:
+    description: 'Compile with AdaptiveCPP too ?'
+    type: boolean
+    required: false
+    default: false
   with_samples:
     description: 'Compile samples too ? Require install_dir.'
     type: boolean
@@ -116,7 +121,9 @@ runs:
     - name: Personalize compiler
       shell: bash
       run: |
-        if [[ "${{ inputs.compilo }}" == "clang" ]]; then
+        if [[ "${{ inputs.with_acpp }}" == "true" ]]; then
+          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=acpp -DARCANE_ACCELERATOR_MODE=SYCLDPCPP -DCMAKE_SYCL_COMPILER=acpp" >> $GITHUB_ENV
+        elif [[ "${{ inputs.compilo }}" == "clang" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" >> $GITHUB_ENV
         else
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" >> $GITHUB_ENV

@@ -17,16 +17,17 @@ This composite action can work with any docker image with the necessary/recommen
 | `source_dir`  | Directory with framework sources. Get the sources with the `actions/checkout` action.  | Yes |
 | `build_dir`  | Directory for build files. No need to create this folder before.  | Yes |
 | `install_dir`  | Directory for installation files. No need to create this folder before. If it is empty, the installation will not proceed. | No () |
+| `log_dir`  | Log directory to save logs. You can use the `actions/upload-artifact` action to easily get the logs. If no value is given, the log will not be moved from the build folder. | No () |
 | `cache_dir`  | Cache directory to speed up compilation. You can use the `actions/cache` action to save/restore this folder for a future build. If it is empty, ccache will not be used. | No () |
 | `max_size_cache_dir`  | Max size for the `cache_dir` directory. | No (`5G`) |
-| `log_dir`  | Log directory to save logs. You can use the `actions/upload-artifact` action to easily get the logs. If no value is given, the log will not be moved from the build folder. | No () |
 | `cmake_additionnal_args`  | Additional arguments given to CMake configure. Example: `'-DARCCORE_CXX_STANDARD=23 -DARCANE_DISABLE_PERFCOUNTER_TESTS=ON -DARCANE_DEFAULT_PARTITIONER=Metis'`  | No () |
 | `type_build`  | Type of build. You can choose `Debug`, `Check` or `Release`.  | No (`Release`) |
 | `use_ninja`  | Use ninja instead of make to build the Framework.  | No (`true`) |
 | `use_shared_libs`  | Generate shared libs instead of static libs.  | No (`true`) |
 | `verbose`  | Add verbose args for make/ninja.  | No (`false`) |
-| `compilo`  | Compiler to build the Framework. You can choose `GCC` or `Clang`. If you want an other compiler, you can use `cmake_additionnal_args` input.  | No (`GCC`) |
+| `compilo`  | Compiler to build the Framework. You can choose `gcc` or `clang`. If you want an other compiler, you can use `cmake_additionnal_args` input.  | No (`gcc`) |
 | `with_cuda`  | Use CUDA to compile GPU part of the framework. Need `nvcc` compiler.  | No (`false`) |
+| `with_acpp`  | Use AdaptiveCPP to compile GPU part of the framework. Need `acpp` compiler.  | No (`false`) |
 | `with_samples`  | Build samples. Need an `install_dir`. | No (`false`) |
 | `with_userdoc`  | Build the user documentation. Available in `build_dir/share/userdoc`. | No (`false`) |
 | `with_devdoc`  | Build the dev documentation. Available in `build_dir/share/devdoc`. | No (`false`) |
@@ -45,7 +46,7 @@ jobs:
     name: 'Build, install and test Arcane Framework'
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/arcaneframework/ubuntu-2404:gcc-14_clang-18_minimal_20240709
+      image: ghcr.io/arcaneframework/ubuntu-2404:gcc-14_minimal_20240717
     steps:
       - name: Define environment paths
         shell: bash
@@ -54,6 +55,12 @@ jobs:
           echo "BUILD_DIR=${GITHUB_WORKSPACE}/build" >> $GITHUB_ENV
           echo "INSTALL_DIR=${GITHUB_WORKSPACE}/install" >> $GITHUB_ENV
           echo "CCACHE_DIR=${GITHUB_WORKSPACE}/ccache" >> $GITHUB_ENV
+
+      - name: Set C++ compiler and default MPI
+        shell: bash
+        run: |
+          source /root/scripts/use_openmpi.sh
+          source /root/scripts/use_gcc-14.sh
 
       - name: Checkout framework
         uses: actions/checkout@v4
@@ -71,20 +78,20 @@ jobs:
           cache_dir: ${{ env.CCACHE_DIR }}
           cmake_additionnal_args: '-DARCCORE_CXX_STANDARD=23 -DARCANE_DISABLE_PERFCOUNTER_TESTS=ON -DARCANE_DEFAULT_PARTITIONER=Metis'
           type_build: Debug
-          compilo: GCC
+          compilo: gcc
           with_cuda: false
           with_samples: false
 ```
 
 ## Reusable actions
 You have a reusable action to test the Arcane Framework :
-- `arcaneframework/gh_actions/.github/workflows/reusable_test_framework.yml@v1`
+- `arcaneframework/gh_actions/.github/workflows/reusable_test_framework.yml@v2`
 
 Before using it, you can read this Github Docs page : https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow
 
 There are several 'input' options. To find out the available options, you can read the YAML action file.
 
-This reusable action can work only with [framework-ci](https://github.com/arcaneframework/framework-ci) images. The reusable actions version 1 can work with all framework-ci images `20240703` or before. The reusable action version 2 need framework-ci images `20240709` and after.
+This reusable action can work only with [framework-ci](https://github.com/arcaneframework/framework-ci) images. The reusable actions version 1 can work with all framework-ci images v1 and v2 (`20240703` or before). The reusable action version 2 need framework-ci images v3 (`20240717` and after).
 
 
 ### Example:
@@ -95,15 +102,16 @@ jobs:
     name: '[U22_G12_C16_M]_CLang_OpenMPI_Release'
     uses: 'arcaneframework/gh_actions/.github/workflows/reusable_test_framework.yml@v2'
     with:
-      image: ghcr.io/arcaneframework/ubuntu-2404:gcc-14_clang-18_minimal_20240709
-      compilo: CLang
-      mpi: OpenMPI
-      with_cuda: false
+      image: ghcr.io/arcaneframework/ubuntu-2404:clang-18_minimal_20240717
+      compilo_name: clang
+      compilo_version: 18
+      mpi: OMPI
+      cuda: 'false'
       type_build: Release
       cmake_additionnal_args: '-DARCCORE_CXX_STANDARD=23 -DARCANE_DISABLE_PERFCOUNTER_TESTS=ON -DARCANE_DEFAULT_PARTITIONER=Metis'
       with_samples: true
       execute_tests: true
       excluded_tests: ^.*([3-9]proc|[1-9][0-9]+proc|[5-9]thread|[1-9][0-9]+thread).*$
       excluded_tests_with_labels: LARGE_HYBRID
-      cache_key_prefix: U22_G12_C16_M_CLang_OpenMPI_Release
+      cache_key_prefix: U24_C18_M_OMPI_Release
 ```

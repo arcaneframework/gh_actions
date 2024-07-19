@@ -122,11 +122,22 @@ runs:
       shell: bash
       run: |
         if [[ "${{ inputs.with_acpp }}" == "true" ]]; then
-          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=acpp -DARCANE_ACCELERATOR_MODE=SYCLDPCPP -DCMAKE_SYCL_COMPILER=acpp" >> $GITHUB_ENV
+          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=acpp \
+          -DARCANE_ACCELERATOR_MODE=SYCLDPCPP \
+          -DCMAKE_SYCL_COMPILER=acpp \
+          " >> $GITHUB_ENV
         elif [[ "${{ inputs.compilo }}" == "clang" ]]; then
-          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" >> $GITHUB_ENV
+          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          " >> $GITHUB_ENV
         else
-          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" >> $GITHUB_ENV
+          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_COMPILER=g++ \
+          " >> $GITHUB_ENV
         fi
 
     # Oui, ici, le type 'boolean' ne semble pas l'interesser plus que ça...

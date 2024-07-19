@@ -88,9 +88,6 @@ on:
 
 
 env:
-  # CTest
-  CT_OPTS: "--timeout 1200 --output-on-failure"
-
   # OpenMPI
   OMPI_ALLOW_RUN_AS_ROOT: 1
   OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
@@ -105,6 +102,11 @@ jobs:
       image: ${{inputs.image}}
 
     steps:
+      - name: Display CPU Infos
+        shell: bash
+        run: |
+          cat /proc/cpuinfo
+
       - name: Define environment paths
         shell: bash
         run: |
@@ -201,7 +203,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p ${{ env.CT_RESULT_DIR }}
-          ARCANE_CHECK=1 ctest --test-dir ${{ env.BUILD_DIR }} --output-junit ${{ env.CT_RESULT_DIR }}/results.xml ${{ env.CT_OPTS }} -E '${{inputs.excluded_tests}}' -LE '${{inputs.excluded_tests_with_labels}}' ${{inputs.ctest_additionnal_args}}
+          ARCANE_CHECK=1 ctest --test-dir ${{ env.BUILD_DIR }} --output-junit ${{ env.CT_RESULT_DIR }}/results.xml  --output-on-failure -E '${{inputs.excluded_tests}}' -LE '${{inputs.excluded_tests_with_labels}}' ${{inputs.ctest_additionnal_args}}
 
       - name: Upload test artifact
         if: failure()

@@ -30,6 +30,11 @@ inputs:
     type: string
     required: false
     default: "5G"
+  ccache_debug_mode:
+    description: 'Activate CCache debug mode (need a log_dir)'
+    type: boolean
+    required: false
+    default: false
   cmake_additionnal_args:
     description: 'Additionnal arguments for configure'
     type: string
@@ -178,7 +183,7 @@ runs:
         echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DALIEN_GENERATE_DOCUMENTATION=ON" >> $GITHUB_ENV
 
     - name: Set debug mode for ccache
-      if: "${{ inputs.log_dir != '' }}"
+      if: "${{ inputs.log_dir != '' && inputs.ccache_debug_mode == 'true' }}"
       shell: bash
       run: |
         mkdir -p "${{ inputs.log_dir }}/ccache"

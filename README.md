@@ -20,6 +20,7 @@ This composite action can work with any docker image with the necessary/recommen
 | `log_dir`  | Log directory to save logs. You can use the `actions/upload-artifact` action to easily get the logs. If no value is given, the log will not be moved from the build folder. | No () |
 | `cache_dir`  | Cache directory to speed up compilation. You can use the `actions/cache` action to save/restore this folder for a future build. If it is empty, ccache will not be used. | No () |
 | `max_size_cache_dir`  | Max size for the `cache_dir` directory. | No (`5G`) |
+| `ccache_debug_mode`  | Activate CCache debug mode (need a `log_dir`). | No (`false`) |
 | `cmake_additionnal_args`  | Additional arguments given to CMake configure. Example: `'-DARCCORE_CXX_STANDARD=23 -DARCANE_DISABLE_PERFCOUNTER_TESTS=ON -DARCANE_DEFAULT_PARTITIONER=Metis'`  | No () |
 | `type_build`  | Type of build. You can choose `Debug`, `Check` or `Release`.  | No (`Release`) |
 | `use_ninja`  | Use ninja instead of make to build the Framework.  | No (`true`) |
@@ -99,7 +100,7 @@ https://github.com/arcaneframework/framework/blob/main/.github/workflows/build_t
 ```yml
 jobs:
   build-install-test:
-    name: '[U22_G12_C16_M]_CLang_OpenMPI_Release'
+    name: '[U24_C18_M]_OMPI_Release'
     uses: 'arcaneframework/gh_actions/.github/workflows/reusable_test_framework.yml@v2'
     with:
       image: ghcr.io/arcaneframework/ubuntu-2404:clang-18_minimal_20240717

@@ -48,6 +48,11 @@ on:
         type: boolean
         required: false
         default: false
+      ccache_debug_mode:
+        description: 'Activate CCache debug mode'
+        type: boolean
+        required: false
+        default: false
       with_samples:
         description: 'Compile samples too ? Require install_dir.'
         type: boolean
@@ -122,6 +127,16 @@ jobs:
           echo "LOG_DIR=${GITHUB_WORKSPACE}/log" >> $GITHUB_ENV
           echo "CT_RESULT_DIR=${GITHUB_WORKSPACE}/test" >> $GITHUB_ENV
 
+      - name: Create paths
+        shell: bash
+        run: |
+          mkdir ${{ env.SOURCE_DIR }} \
+            ${{ env.BUILD_DIR }} \
+            ${{ env.INSTALL_DIR }} \
+            ${{ env.CCACHE_DIR }} \
+            ${{ env.LOG_DIR }} \
+            ${{ env.CT_RESULT_DIR }} 
+
       - name: Set MPICH as default MPI
         if: "${{ inputs.mpi == 'MPICH' }}"
         shell: bash
@@ -176,8 +191,36 @@ jobs:
           echo "$MRAND"
           echo "M_RAND=$MRAND" >> $GITHUB_ENV
 
+      - name: Display disks infos and size of directories
+        shell: bash
+        run: |
+          df -h
+          dum(){
+            DIR="${1:-0}"
+            CMDD=$(du -ahc --time --max-depth=1 "${DIR}")
+            grep -E -- '$(echo "${CMDD}" | tail -n1)|$' <(echo "${CMDD}" | sort -h)
+          }
+          echo "::group::SOURCE_DIR :"
+          dum "${{ env.SOURCE_DIR }}"
+          echo "::endgroup::"
+          echo "::group::BUILD_DIR :"
+          dum "${{ env.BUILD_DIR }}"
+          echo "::endgroup::"
+          echo "::group::INSTALL_DIR :"
+          dum "${{ env.INSTALL_DIR }}"
+          echo "::endgroup::"
+          echo "::group::LOG_DIR :"
+          dum "${{ env.LOG_DIR }}"
+          echo "::endgroup::"
+          echo "::group::CCACHE_DIR :"
+          dum "${{ env.CCACHE_DIR }}"
+          echo "::endgroup::"
+          echo "::group::CT_RESULT_DIR :"
+          dum "${{ env.CT_RESULT_DIR }}"
+          echo "::endgroup::"
+
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v2.0.0
+        uses: arcaneframework/gh_actions/build_install_framework@v2.1.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
@@ -185,6 +228,7 @@ jobs:
           log_dir: ${{ env.LOG_DIR }}
           cache_dir: ${{ env.CCACHE_DIR }}
           max_size_cache_dir: 1G
+          ccache_debug_mode: ${{ inputs.ccache_debug_mode }}
           cmake_additionnal_args: '${{ env.CMAKE_ADD_ARGS }} ${{ inputs.cmake_additionnal_args }} ${{ env.M_RAND }}'
           verbose: ${{ inputs.verbose }}
           type_build: ${{ inputs.type_build }}
@@ -193,18 +237,41 @@ jobs:
           with_acpp: ${{ inputs.use_acpp }}
           with_samples: ${{ inputs.with_samples }}
 
-      - name: Upload failure artifact
-        if: failure()
+      - name: Upload log artifact
+        if: ${{ failure() || inputs.ccache_debug_mode == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.cache_key_prefix }}-failure_config_build-artifact
+          name: ${{ inputs.cache_key_prefix }}-log_config_build-artifact
           path: ${{ env.LOG_DIR }}
           retention-days: 7
 
-      - name: Display disks infos
+      - name: Display disks infos and size of directories
         shell: bash
         run: |
           df -h
+          dum(){
+            DIR="${1:-0}"
+            CMDD=$(du -ahc --time --max-depth=1 "${DIR}")
+            grep -E -- '$(echo "${CMDD}" | tail -n1)|$' <(echo "${CMDD}" | sort -h)
+          }
+          echo "::group::SOURCE_DIR :"
+          dum "${{ env.SOURCE_DIR }}"
+          echo "::endgroup::"
+          echo "::group::BUILD_DIR :"
+          dum "${{ env.BUILD_DIR }}"
+          echo "::endgroup::"
+          echo "::group::INSTALL_DIR :"
+          dum "${{ env.INSTALL_DIR }}"
+          echo "::endgroup::"
+          echo "::group::LOG_DIR :"
+          dum "${{ env.LOG_DIR }}"
+          echo "::endgroup::"
+          echo "::group::CCACHE_DIR :"
+          dum "${{ env.CCACHE_DIR }}"
+          echo "::endgroup::"
+          echo "::group::CT_RESULT_DIR :"
+          dum "${{ env.CT_RESULT_DIR }}"
+          echo "::endgroup::"
 
       - name: Test
         if: ${{ inputs.execute_tests }}
@@ -213,10 +280,33 @@ jobs:
           mkdir -p ${{ env.CT_RESULT_DIR }}
           ARCANE_CHECK=1 ctest --test-dir ${{ env.BUILD_DIR }} --output-junit ${{ env.CT_RESULT_DIR }}/results.xml  --output-on-failure -E '${{inputs.excluded_tests}}' -LE '${{inputs.excluded_tests_with_labels}}' ${{inputs.ctest_additionnal_args}}
 
-      - name: Display disks infos
+      - name: Display disks infos and size of directories
         shell: bash
         run: |
           df -h
+          dum(){
+            DIR="${1:-0}"
+            CMDD=$(du -ahc --time --max-depth=1 "${DIR}")
+            grep -E -- '$(echo "${CMDD}" | tail -n1)|$' <(echo "${CMDD}" | sort -h)
+          }
+          echo "::group::SOURCE_DIR :"
+          dum "${{ env.SOURCE_DIR }}"
+          echo "::endgroup::"
+          echo "::group::BUILD_DIR :"
+          dum "${{ env.BUILD_DIR }}"
+          echo "::endgroup::"
+          echo "::group::INSTALL_DIR :"
+          dum "${{ env.INSTALL_DIR }}"
+          echo "::endgroup::"
+          echo "::group::LOG_DIR :"
+          dum "${{ env.LOG_DIR }}"
+          echo "::endgroup::"
+          echo "::group::CCACHE_DIR :"
+          dum "${{ env.CCACHE_DIR }}"
+          echo "::endgroup::"
+          echo "::group::CT_RESULT_DIR :"
+          dum "${{ env.CT_RESULT_DIR }}"
+          echo "::endgroup::"
 
       - name: Upload test artifact
         if: failure()

@@ -48,6 +48,11 @@ on:
         type: boolean
         required: false
         default: false
+      ccache_debug_mode:
+        description: 'Activate CCache debug mode'
+        type: boolean
+        required: false
+        default: false
       with_samples:
         description: 'Compile samples too ? Require install_dir.'
         type: boolean
@@ -215,7 +220,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v2.0.0
+        uses: arcaneframework/gh_actions/build_install_framework@v2.1.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
@@ -223,6 +228,7 @@ jobs:
           log_dir: ${{ env.LOG_DIR }}
           cache_dir: ${{ env.CCACHE_DIR }}
           max_size_cache_dir: 1G
+          ccache_debug_mode: ${{ inputs.ccache_debug_mode }}
           cmake_additionnal_args: '${{ env.CMAKE_ADD_ARGS }} ${{ inputs.cmake_additionnal_args }} ${{ env.M_RAND }}'
           verbose: ${{ inputs.verbose }}
           type_build: ${{ inputs.type_build }}
@@ -231,11 +237,11 @@ jobs:
           with_acpp: ${{ inputs.use_acpp }}
           with_samples: ${{ inputs.with_samples }}
 
-      - name: Upload failure artifact
-        if: failure()
+      - name: Upload log artifact
+        if: ${{ failure() || inputs.ccache_debug_mode == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.cache_key_prefix }}-failure_config_build-artifact
+          name: ${{ inputs.cache_key_prefix }}-log_config_build-artifact
           path: ${{ env.LOG_DIR }}
           retention-days: 7
 

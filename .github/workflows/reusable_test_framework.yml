@@ -86,7 +86,7 @@ on:
         default: ''
 
       use_cache:
-        description: 'Use cache ?'
+        description: 'Use cache ? (true/false)'
         type: string
         required: false
         default: 'true'

@@ -1,7 +1,17 @@
 # GitHub Actions : Reusable and composite actions
 
-## When updating tags
-In `.github/workflows/`, action tags need to be updated.
+- [GitHub Actions : Reusable and composite actions](#github-actions--reusable-and-composite-actions)
+  - [Composite action](#composite-action)
+    - [Available inputs for the first composite action](#available-inputs-for-the-first-composite-action)
+    - [Example for the composite action](#example-for-the-composite-action)
+  - [Reusable actions](#reusable-actions)
+    - [Example](#example)
+  - [Tags guide](#tags-guide)
+    - [First number (vX or vX.0.0) : Major update](#first-number-vx-or-vx00--major-update)
+    - [Second number (v0.X.0) : Minor update](#second-number-v0x0--minor-update)
+    - [Third number (v0.0.X) : Fix update](#third-number-v00x--fix-update)
+    - [When updating tags](#when-updating-tags)
+
 
 ## Composite action
 You have a composite action to build and install the Arcane Framework.
@@ -11,7 +21,7 @@ This composite action allowing you to build and install all of the Framework :
 
 This composite action can work with any docker image with the necessary/recommended Arcane dependencies (see [documentation](https://arcaneframework.github.io/arcane/userdoc/html/d0/d6e/arcanedoc_build_install_prerequisites.html) for more information).
 
-### Available inputs for the first composite action:
+### Available inputs for the first composite action
 | Input | Description | Required (Default value) |
 | :---: |    :---:    | :---: |
 | `source_dir`  | Directory with framework sources. Get the sources with the `actions/checkout` action.  | Yes |
@@ -34,7 +44,7 @@ This composite action can work with any docker image with the necessary/recommen
 | `with_devdoc`  | Build the dev documentation. Available in `build_dir/share/devdoc`. | No (`false`) |
 | `with_aliendoc`  | Build the Alien documentation. Available in `build_dir/share/aliendoc`. | No (`false`) |
 
-### Example for the composite action:
+### Example for the composite action
 https://github.com/arcaneframework/gh_actions/blob/master/.github/workflows/reusable_test_framework.yml
 ```yml
 env:
@@ -95,7 +105,7 @@ There are several 'input' options. To find out the available options, you can re
 This reusable action can work only with [framework-ci](https://github.com/arcaneframework/framework-ci) images. The reusable actions version 1 can work with all framework-ci images v1 and v2 (`20240703` or before). The reusable action version 2 need framework-ci images v3 (`20240717` and after).
 
 
-### Example:
+### Example
 https://github.com/arcaneframework/framework/blob/main/.github/workflows/build_tests_release.yml
 ```yml
 jobs:
@@ -116,3 +126,24 @@ jobs:
       excluded_tests_with_labels: LARGE_HYBRID
       cache_key_prefix: U24_C18_M_OMPI_Release
 ```
+## Tags guide
+
+There are two type of tags : small tags (e.g. v2) and long tags (e.g. v2.1.0).
+
+### First number (vX or vX.0.0) : Major update
+
+A major update may require new images and may remove, modify or add some options.
+These are major changes that require user action.
+
+### Second number (v0.X.0) : Minor update
+
+A minor update can only add a few optional options and/or fix bugs.
+There are no major changes.
+
+### Third number (v0.0.X) : Fix update
+
+A fix update can only fix bugs.
+
+### When updating tags
+In `.github/workflows/`, action tags need to be updated.
+

@@ -86,10 +86,10 @@ on:
         default: ''
 
       use_cache:
-        description: 'Use cache ?'
-        type: boolean
+        description: 'Use cache ? (true/false)'
+        type: string
         required: false
-        default: true
+        default: 'true'
       cache_key_prefix:
         description: 'Cache key prefix'
         type: string

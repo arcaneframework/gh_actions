@@ -23,16 +23,16 @@ on:
         type: string
         required: false
         default: 'OMPI'
-      cuda:
-        description: 'CUDA version (cuda-XXX or false)'
+      acc_compilo_name:
+        description: 'Accelerator compiler name (cuda, acpp, clang)'
         type: string
         required: false
-        default: 'false'
-      use_acpp:
-        description: 'Use AdaptiveCPP ?'
-        type: boolean
+        default: ''
+      acc_compilo_version:
+        description: 'Accelerator compiler version (125, 126, ...) or empty str'
+        type: string
         required: false
-        default: false
+        default: ''
       type_build:
         description: 'Type of build (Debug, Check, Release)'
         type: string
@@ -169,11 +169,19 @@ jobs:
             source /root/scripts/use_${{inputs.compilo_name}}-${{inputs.compilo_version}}.sh
           fi
 
-      - name: Set CUDA
-        if: "${{ inputs.cuda != 'false' }}"
+      - name: Set accelerator compiler
+        if: "${{ inputs.acc_compilo_name != '' }}"
         shell: bash
         run: |
-          source /root/scripts/use_${{inputs.cuda}}.sh
+          if [[ "${{ inputs.acc_compilo_name }}" == "cuda" ]]; then
+            if [[ "${{ inputs.acc_compilo_version }}" == "" ]]; then
+              source /root/scripts/use_cuda.sh
+            else
+              source /root/scripts/use_cuda-${{inputs.acc_compilo_version}}.sh
+            fi
+          elif [[ "${{ inputs.acc_compilo_name }}" == "clang" ]]; then
+            source /root/scripts/use_cuda.sh
+          fi
 
       - name: Get date
         shell: bash
@@ -247,8 +255,7 @@ jobs:
           verbose: ${{ inputs.verbose }}
           type_build: ${{ inputs.type_build }}
           compilo: ${{ inputs.compilo_name }}
-          with_cuda: ${{ inputs.cuda != 'false' }}
-          with_acpp: ${{ inputs.use_acpp }}
+          acc_compilo: ${{ inputs.acc_compilo_name }}
           with_samples: ${{ inputs.with_samples }}
 
       - name: Upload log artifact

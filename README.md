@@ -37,8 +37,7 @@ This composite action can work with any docker image with the necessary/recommen
 | `use_shared_libs`  | Generate shared libs instead of static libs.  | No (`true`) |
 | `verbose`  | Add verbose args for make/ninja.  | No (`false`) |
 | `compilo`  | Compiler to build the Framework. You can choose `gcc` or `clang`. If you want an other compiler, you can use `cmake_additionnal_args` input.  | No (`gcc`) |
-| `with_cuda`  | Use CUDA to compile GPU part of the framework. Need `nvcc` compiler.  | No (`false`) |
-| `with_acpp`  | Use AdaptiveCPP to compile GPU part of the framework. Need `acpp` compiler.  | No (`false`) |
+| `acc_compilo`  | Compiler to compile GPU part of the framework. You can choose `cuda` (for `nvcc` compiler) or `clang` (to compile CUDA part with `clang++`) or `acpp` (to use AdaptiveCPP).  | No () |
 | `with_samples`  | Build samples. Need an `install_dir`. | No (`false`) |
 | `with_userdoc`  | Build the user documentation. Available in `build_dir/share/userdoc`. | No (`false`) |
 | `with_devdoc`  | Build the dev documentation. Available in `build_dir/share/devdoc`. | No (`false`) |

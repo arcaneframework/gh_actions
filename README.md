@@ -37,7 +37,7 @@ This composite action can work with any docker image with the necessary/recommen
 | `use_shared_libs`  | Generate shared libs instead of static libs.  | No (`true`) |
 | `verbose`  | Add verbose args for make/ninja.  | No (`false`) |
 | `compilo`  | Compiler to build the Framework. You can choose `gcc` or `clang`. If you want an other compiler, you can use `cmake_additionnal_args` input.  | No (`gcc`) |
-| `acc_compilo`  | Compiler to compile GPU part of the framework. You can choose `cuda` (for `nvcc` compiler) or `clang` (to compile CUDA part with `clang++`) or `acpp` (to use AdaptiveCPP).  | No () |
+| `acc_compilo`  | Compiler to compile GPU part of the framework. You can choose `nvcc` (for CUDA `nvcc` compiler) or `clang` (to compile CUDA part with `clang++`) or `acpp` (to compile SYCL part with AdaptiveCPP).  | No () |
 | `with_samples`  | Build samples. Need an `install_dir`. | No (`false`) |
 | `with_userdoc`  | Build the user documentation. Available in `build_dir/share/userdoc`. | No (`false`) |
 | `with_devdoc`  | Build the dev documentation. Available in `build_dir/share/devdoc`. | No (`false`) |
@@ -80,7 +80,7 @@ jobs:
           submodules: true
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v2
+        uses: arcaneframework/gh_actions/build_install_framework@v3
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
@@ -89,7 +89,7 @@ jobs:
           cmake_additionnal_args: '-DARCCORE_CXX_STANDARD=23 -DARCANE_DISABLE_PERFCOUNTER_TESTS=ON -DARCANE_DEFAULT_PARTITIONER=Metis'
           type_build: Debug
           compilo: gcc
-          with_cuda: false
+          acc_compilo: nvcc
           with_samples: false
 ```
 
@@ -101,7 +101,7 @@ Before using it, you can read this Github Docs page : https://docs.github.com/en
 
 There are several 'input' options. To find out the available options, you can read the YAML action file.
 
-This reusable action can work only with [framework-ci](https://github.com/arcaneframework/framework-ci) images. The reusable actions version 1 can work with all framework-ci images v1 and v2 (`20240703` or before). The reusable action version 2 need framework-ci images v3 (`20240717` and after).
+This reusable action can work only with [framework-ci](https://github.com/arcaneframework/framework-ci) images. The reusable actions version 1 can work with all framework-ci images v1 and v2 (`20240703` or before). The reusable action version 2 and later need framework-ci images v3 (`20240717` and after).
 
 
 ### Example
@@ -110,13 +110,12 @@ https://github.com/arcaneframework/framework/blob/main/.github/workflows/build_t
 jobs:
   build-install-test:
     name: '[U24_C18_M]_OMPI_Release'
-    uses: 'arcaneframework/gh_actions/.github/workflows/reusable_test_framework.yml@v2'
+    uses: 'arcaneframework/gh_actions/.github/workflows/reusable_test_framework.yml@v3'
     with:
       image: ghcr.io/arcaneframework/ubuntu-2404:clang-18_minimal_20240717
       compilo_name: clang
       compilo_version: 18
       mpi: OMPI
-      cuda: 'false'
       type_build: Release
       cmake_additionnal_args: '-DARCCORE_CXX_STANDARD=23 -DARCANE_DISABLE_PERFCOUNTER_TESTS=ON -DARCANE_DEFAULT_PARTITIONER=Metis'
       with_samples: true

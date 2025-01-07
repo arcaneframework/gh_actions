@@ -66,7 +66,7 @@ inputs:
     required: false
     default: "gcc"
   acc_compilo:
-    description: 'Accelerator compiler (cuda, clang, acpp)'
+    description: 'Accelerator compiler (nvcc, clang, acpp)'
     type: string
     required: false
     default: ""
@@ -144,17 +144,17 @@ runs:
       run: |
       if [[ "${{ inputs.acc_compilo }}" == "acpp" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
-          -DARCANE_ACCELERATOR_MODE=SYCLDPCPP \
+          -DARCANE_ACCELERATOR_MODE=SYCL \
           -DCMAKE_SYCL_COMPILER=acpp \
           " >> $GITHUB_ENV
-        elif [[ "${{ inputs.acc_compilo }}" == "cuda" ]]; then
+        elif [[ "${{ inputs.acc_compilo }}" == "nvcc" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
-          -DARCANE_ACCELERATOR_MODE=CUDANVCC \
+          -DARCANE_ACCELERATOR_MODE=CUDA \
           -DCMAKE_CUDA_COMPILER=nvcc \
           " >> $GITHUB_ENV
         elif [[ "${{ inputs.acc_compilo }}" == "clang" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
-          -DARCANE_ACCELERATOR_MODE=CUDANVCC \
+          -DARCANE_ACCELERATOR_MODE=CUDA \
           -DCMAKE_CUDA_COMPILER=clang++ \
           " >> $GITHUB_ENV
         else

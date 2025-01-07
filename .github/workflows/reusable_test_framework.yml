@@ -174,13 +174,17 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ inputs.acc_compilo_name }}" == "cuda" ]]; then
+            echo "ACC_COMPILER=nvcc" >> $GITHUB_ENV
             if [[ "${{ inputs.acc_compilo_version }}" == "" ]]; then
               source /root/scripts/use_cuda.sh
             else
               source /root/scripts/use_cuda-${{inputs.acc_compilo_version}}.sh
             fi
           elif [[ "${{ inputs.acc_compilo_name }}" == "clang" ]]; then
+            echo "ACC_COMPILER=clang" >> $GITHUB_ENV
             source /root/scripts/use_cuda.sh
+          elif [[ "${{ inputs.acc_compilo_name }}" == "acpp" ]]; then
+            echo "ACC_COMPILER=acpp" >> $GITHUB_ENV
           fi
 
       - name: Get date
@@ -241,8 +245,9 @@ jobs:
             echo "::endgroup::"
           fi
 
+      # TODO : Retirer le nom de la branche avant de merge !
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v2.2.0
+        uses: arcaneframework/gh_actions/build_install_framework@dev/ah-improve-accelerator-compiler-support
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
@@ -255,7 +260,7 @@ jobs:
           verbose: ${{ inputs.verbose }}
           type_build: ${{ inputs.type_build }}
           compilo: ${{ inputs.compilo_name }}
-          acc_compilo: ${{ inputs.acc_compilo_name }}
+          acc_compilo: ${{ env.ACC_COMPILER }}
           with_samples: ${{ inputs.with_samples }}
 
       - name: Upload log artifact

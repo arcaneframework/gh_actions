@@ -95,6 +95,11 @@ on:
         type: string
         required: false
         default: 'aio'
+      artifact_key_prefix:
+        description: 'Artifact key prefix'
+        type: string
+        required: false
+        default: 'artifact'
 
 
 env:
@@ -267,7 +272,7 @@ jobs:
         if: ${{ failure() || inputs.ccache_debug_mode == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.cache_key_prefix }}-log_config_build-artifact
+          name: ${{ inputs.artifact_key_prefix }}-log_config_build-artifact
           path: ${{ env.LOG_DIR }}
           retention-days: 7
 
@@ -342,6 +347,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.cache_key_prefix }}-test-artifact
+          name: ${{ inputs.artifact_key_prefix }}-test-artifact
           path: ${{ env.CT_RESULT_DIR }}
           retention-days: 7

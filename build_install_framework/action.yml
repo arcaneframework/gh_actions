@@ -142,7 +142,7 @@ runs:
       if: "${{ inputs.acc_compilo != '' }}"
       shell: bash
       run: |
-      if [[ "${{ inputs.acc_compilo }}" == "acpp" ]]; then
+        if [[ "${{ inputs.acc_compilo }}" == "acpp" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
           -DARCANE_ACCELERATOR_MODE=SYCL \
           -DCMAKE_SYCL_COMPILER=acpp \

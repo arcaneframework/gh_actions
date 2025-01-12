@@ -34,10 +34,11 @@ This composite action can work with any docker image with the necessary/recommen
 | `cmake_additionnal_args`  | Additional arguments given to CMake configure. Example: `'-DARCCORE_CXX_STANDARD=23 -DARCANE_DISABLE_PERFCOUNTER_TESTS=ON -DARCANE_DEFAULT_PARTITIONER=Metis'`  | No () |
 | `type_build`  | Type of build. You can choose `Debug`, `Check` or `Release`.  | No (`Release`) |
 | `use_ninja`  | Use ninja instead of make to build the Framework.  | No (`true`) |
+| `use_mold`  | Use mold linker instead of ld to build the Framework.  | No (`false`) |
 | `use_shared_libs`  | Generate shared libs instead of static libs.  | No (`true`) |
 | `verbose`  | Add verbose args for make/ninja.  | No (`false`) |
 | `compilo`  | Compiler to build the Framework. You can choose `gcc` or `clang`. If you want an other compiler, you can use `cmake_additionnal_args` input.  | No (`gcc`) |
-| `acc_compilo`  | Compiler to compile GPU part of the framework. You can choose `nvcc` (for CUDA `nvcc` compiler) or `clang` (to compile CUDA part with `clang++`) or `acpp` (to compile SYCL part with AdaptiveCPP).  | No () |
+| `acc_compilo`  | Compiler to compile GPU part of the framework. You can choose `nvcc` (for CUDA `nvcc` compiler) or `clang_cuda` (to compile CUDA part with `clang++`) or `acpp` (to compile SYCL part with AdaptiveCPP).  | No () |
 | `with_samples`  | Build samples. Need an `install_dir`. | No (`false`) |
 | `with_userdoc`  | Build the user documentation. Available in `build_dir/share/userdoc`. | No (`false`) |
 | `with_devdoc`  | Build the dev documentation. Available in `build_dir/share/devdoc`. | No (`false`) |

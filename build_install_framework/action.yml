@@ -50,6 +50,11 @@ inputs:
     type: boolean
     required: false
     default: true
+  use_mold:
+    description: 'Use mold linker instead of ld'
+    type: boolean
+    required: false
+    default: false
   use_shared_libs:
     description: 'Use shared libs instead of static libs'
     type: boolean
@@ -66,7 +71,7 @@ inputs:
     required: false
     default: "gcc"
   acc_compilo:
-    description: 'Accelerator compiler (nvcc, clang, acpp)'
+    description: 'Accelerator compiler (nvcc, clang_cuda, acpp, amdclang)'
     type: string
     required: false
     default: ""
@@ -152,10 +157,15 @@ runs:
           -DARCANE_ACCELERATOR_MODE=CUDA \
           -DCMAKE_CUDA_COMPILER=nvcc \
           " >> $GITHUB_ENV
-        elif [[ "${{ inputs.acc_compilo }}" == "clang" ]]; then
+        elif [[ "${{ inputs.acc_compilo }}" == "clang_cuda" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
           -DARCANE_ACCELERATOR_MODE=CUDA \
-          -DCMAKE_CUDA_COMPILER=clang++ \
+          -DCMAKE_CUDA_COMPILER=clang++_cuda \
+          " >> $GITHUB_ENV
+        elif [[ "${{ inputs.acc_compilo }}" == "amdclang" ]]; then
+          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
+          -DARCANE_ACCELERATOR_MODE=ROCM \
+          -DCMAKE_CUDA_COMPILER=amdclang++ \
           " >> $GITHUB_ENV
         else
           exit 1
@@ -173,6 +183,12 @@ runs:
       shell: bash
       run: |
         echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -GNinja" >> $GITHUB_ENV
+
+    - name: Use mold
+      if: "${{ inputs.use_mold == 'true' }}"
+      shell: bash
+      run: |
+        echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_LINKER_TYPE=MOLD" >> $GITHUB_ENV
 
     - name: Use shared libs
       if: "${{ inputs.use_shared_libs == 'true' }}"

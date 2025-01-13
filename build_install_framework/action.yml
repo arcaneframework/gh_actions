@@ -136,7 +136,7 @@ runs:
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
           " >> $GITHUB_ENV
-        else
+        elif [[ "${{ inputs.compilo }}" == "gcc" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \

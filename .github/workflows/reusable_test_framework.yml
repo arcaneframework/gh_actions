@@ -267,9 +267,8 @@ jobs:
             echo "::endgroup::"
           fi
 
-      # TODO : Retirer le nom de la branche avant de merge !
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@dev/ah-improve-accelerator-compiler-support
+        uses: arcaneframework/gh_actions/build_install_framework@v3.0.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}

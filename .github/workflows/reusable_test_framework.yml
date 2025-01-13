@@ -173,6 +173,7 @@ jobs:
           else
             source /root/scripts/use_${{inputs.compilo_name}}-${{inputs.compilo_version}}.sh
           fi
+          echo "USE_MOLD=true" >> $GITHUB_ENV
 
       - name: Set accelerator compiler
         if: "${{ inputs.acc_compilo_name != '' }}"
@@ -180,6 +181,7 @@ jobs:
         run: |
           if [[ "${{ inputs.acc_compilo_name }}" == "cuda" ]]; then
             echo "ACC_COMPILER=nvcc" >> $GITHUB_ENV
+            echo "USE_MOLD=true" >> $GITHUB_ENV
             if [[ "${{ inputs.acc_compilo_version }}" == "" ]]; then
               source /root/scripts/use_cuda.sh
             else
@@ -187,6 +189,7 @@ jobs:
             fi
           elif [[ "${{ inputs.acc_compilo_name }}" == "clang_cuda" ]]; then
             echo "ACC_COMPILER=clang_cuda" >> $GITHUB_ENV
+            echo "USE_MOLD=false" >> $GITHUB_ENV
             if [[ "${{ inputs.acc_compilo_version }}" == "" ]]; then
               source /root/scripts/use_clang_cuda.sh
             else
@@ -194,6 +197,7 @@ jobs:
             fi
           elif [[ "${{ inputs.acc_compilo_name }}" == "rocm" ]]; then
             echo "ACC_COMPILER=amdclang" >> $GITHUB_ENV
+            echo "USE_MOLD=false" >> $GITHUB_ENV
             echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DCMAKE_PREFIX_PATH=/opt/rocm" >> $GITHUB_ENV
             if [[ "${{ inputs.acc_compilo_version }}" == "" ]]; then
               source /root/scripts/use_rocm.sh
@@ -202,6 +206,7 @@ jobs:
             fi
           elif [[ "${{ inputs.acc_compilo_name }}" == "acpp" ]]; then
             echo "ACC_COMPILER=acpp" >> $GITHUB_ENV
+            echo "USE_MOLD=true" >> $GITHUB_ENV
           fi
 
       - name: Get date
@@ -276,6 +281,7 @@ jobs:
           cmake_additionnal_args: '${{ env.CMAKE_ADD_ARGS }} ${{ inputs.cmake_additionnal_args }} ${{ env.M_RAND }}'
           verbose: ${{ inputs.verbose }}
           type_build: ${{ inputs.type_build }}
+          use_mold: ${{ env.USE_MOLD }}
           compilo: ${{ inputs.compilo_name }}
           acc_compilo: ${{ env.ACC_COMPILER }}
           with_samples: ${{ inputs.with_samples }}

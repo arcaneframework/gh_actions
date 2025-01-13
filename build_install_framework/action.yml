@@ -50,6 +50,11 @@ inputs:
     type: boolean
     required: false
     default: true
+  use_mold:
+    description: 'Use mold linker instead of ld'
+    type: boolean
+    required: false
+    default: false
   use_shared_libs:
     description: 'Use shared libs instead of static libs'
     type: boolean
@@ -65,16 +70,11 @@ inputs:
     type: string
     required: false
     default: "gcc"
-  with_cuda:
-    description: 'Compile with CUDA too ?'
-    type: boolean
+  acc_compilo:
+    description: 'Accelerator compiler (nvcc, clang_cuda, acpp, amdclang)'
+    type: string
     required: false
-    default: false
-  with_acpp:
-    description: 'Compile with AdaptiveCPP too ?'
-    type: boolean
-    required: false
-    default: false
+    default: ""
   with_samples:
     description: 'Compile samples too ? Require install_dir.'
     type: boolean
@@ -126,31 +126,50 @@ runs:
     - name: Personalize compiler
       shell: bash
       run: |
-        if [[ "${{ inputs.with_acpp }}" == "true" ]]; then
+        if [[ "${{ inputs.acc_compilo }}" == "acpp" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=acpp \
-          -DARCANE_ACCELERATOR_MODE=SYCLDPCPP \
-          -DCMAKE_SYCL_COMPILER=acpp \
           " >> $GITHUB_ENV
         elif [[ "${{ inputs.compilo }}" == "clang" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
           " >> $GITHUB_ENV
-        else
+        elif [[ "${{ inputs.compilo }}" == "gcc" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
           " >> $GITHUB_ENV
         fi
 
-    # Oui, ici, le type 'boolean' ne semble pas l'interesser plus que ça...
-    - name: Add cuda
-      if: "${{ inputs.with_cuda == 'true' }}"
+    - name: Personalize accelerator compiler
+      if: "${{ inputs.acc_compilo != '' }}"
       shell: bash
       run: |
-        echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DARCANE_ACCELERATOR_MODE=CUDANVCC -DCMAKE_CUDA_COMPILER=nvcc" >> $GITHUB_ENV
+        if [[ "${{ inputs.acc_compilo }}" == "acpp" ]]; then
+          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
+          -DARCANE_ACCELERATOR_MODE=SYCL \
+          -DCMAKE_SYCL_COMPILER=acpp \
+          " >> $GITHUB_ENV
+        elif [[ "${{ inputs.acc_compilo }}" == "nvcc" ]]; then
+          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
+          -DARCANE_ACCELERATOR_MODE=CUDA \
+          -DCMAKE_CUDA_COMPILER=nvcc \
+          " >> $GITHUB_ENV
+        elif [[ "${{ inputs.acc_compilo }}" == "clang_cuda" ]]; then
+          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
+          -DARCANE_ACCELERATOR_MODE=CUDA \
+          -DCMAKE_CUDA_COMPILER=clang++_cuda \
+          " >> $GITHUB_ENV
+        elif [[ "${{ inputs.acc_compilo }}" == "amdclang" ]]; then
+          echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
+          -DARCANE_ACCELERATOR_MODE=ROCM \
+          -DCMAKE_CUDA_COMPILER=amdclang++ \
+          " >> $GITHUB_ENV
+        else
+          exit 1
+        fi
 
     - name: Add install prefix
       if: "${{ inputs.install_dir != '' }}"
@@ -158,11 +177,18 @@ runs:
       run: |
         echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_INSTALL_PREFIX=${{ inputs.install_dir }}" >> $GITHUB_ENV
 
+    # Oui, ici, le type 'boolean' ne semble pas l'interesser plus que ça...
     - name: Use ninja
       if: "${{ inputs.use_ninja == 'true' }}"
       shell: bash
       run: |
         echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -GNinja" >> $GITHUB_ENV
+
+    - name: Use mold
+      if: "${{ inputs.use_mold == 'true' }}"
+      shell: bash
+      run: |
+        echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} -DCMAKE_LINKER_TYPE=MOLD" >> $GITHUB_ENV
 
     - name: Use shared libs
       if: "${{ inputs.use_shared_libs == 'true' }}"

@@ -17,7 +17,7 @@
 You have a composite action to build and install the Arcane Framework.
 
 This composite action allowing you to build and install all of the Framework :
-  - `arcaneframework/gh_actions/build_install_framework@v2`
+  - `arcaneframework/gh_actions/build_install_framework@v3`
 
 This composite action can work with any docker image with the necessary/recommended Arcane dependencies (see [documentation](https://arcaneframework.github.io/arcane/userdoc/html/d0/d6e/arcanedoc_build_install_prerequisites.html) for more information).
 
@@ -96,7 +96,7 @@ jobs:
 
 ## Reusable actions
 You have a reusable action to test the Arcane Framework :
-- `arcaneframework/gh_actions/.github/workflows/reusable_test_framework.yml@v2`
+- `arcaneframework/gh_actions/.github/workflows/reusable_test_framework.yml@v3`
 
 Before using it, you can read this Github Docs page : https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow
 

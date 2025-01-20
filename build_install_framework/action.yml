@@ -160,7 +160,7 @@ runs:
         elif [[ "${{ inputs.acc_compilo }}" == "clang_cuda" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \
           -DARCANE_ACCELERATOR_MODE=CUDA \
-          -DCMAKE_CUDA_COMPILER=clang++_cuda \
+          -DCMAKE_CUDA_COMPILER=clang++-cuda \
           " >> $GITHUB_ENV
         elif [[ "${{ inputs.acc_compilo }}" == "amdclang" ]]; then
           echo "ACTION_CMAKE_ADD_ARGS=${{ env.ACTION_CMAKE_ADD_ARGS }} \

@@ -84,6 +84,11 @@ on:
         type: string
         required: false
         default: ''
+      ctest_output_on_failure:
+        description: 'Activate output on failure'
+        type: boolean
+        required: false
+        default: true
       ctest_additionnal_args:
         description: 'Additionnal arguments for testing'
         type: string
@@ -344,7 +349,10 @@ jobs:
         shell: bash
         run: |
           mkdir -p ${{ env.CT_RESULT_DIR }}
-          ARCANE_CHECK=1 ctest --test-dir ${{ env.BUILD_DIR }} --output-junit ${{ env.CT_RESULT_DIR }}/results.xml  --output-on-failure -E '${{inputs.excluded_tests}}' -LE '${{inputs.excluded_tests_with_labels}}' ${{inputs.ctest_additionnal_args}}
+          if [[ "${{ inputs.ctest_output_on_failure }}" == "true" ]]; then
+            CT_ARGS="--output-on-failure"
+          fi
+          ARCANE_CHECK=1 ctest --test-dir ${{ env.BUILD_DIR }} --output-junit ${{ env.CT_RESULT_DIR }}/results.xml ${CT_ARGS} -E '${{inputs.excluded_tests}}' -LE '${{inputs.excluded_tests_with_labels}}' ${{inputs.ctest_additionnal_args}}
 
       - name: Display disks infos and size of directories
         shell: bash

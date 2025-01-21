@@ -348,6 +348,7 @@ jobs:
 
       - name: Test
         if: ${{ inputs.execute_tests }}
+        id: ctest
         shell: bash
         run: |
           mkdir -p ${{ env.CT_RESULT_DIR }}
@@ -364,7 +365,7 @@ jobs:
 
       # https://www.ibm.com/docs/en/developer-for-zos/9.1.1?topic=formats-junit-xml-format
       - name: Convert the results.xml to a valid JUnit XML file
-        if: ${{ failure() && inputs.execute_tests == 'true' }}
+        if: ${{ failure() && steps.ctest.conclusion == 'failure' && inputs.execute_tests }}
         shell: bash
         run: |
           RESULT_ORI=${{ env.CT_RESULT_DIR }}/results.xml
@@ -407,7 +408,7 @@ jobs:
           fi
 
       - name: Upload test artifact
-        if: ${{ failure() && inputs.execute_tests == 'true' }}
+        if: ${{ failure() && steps.ctest.conclusion == 'failure' && inputs.execute_tests }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_key_prefix }}-test-artifact

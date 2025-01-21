@@ -352,9 +352,29 @@ jobs:
           if [[ "${{ inputs.ctest_output_on_failure }}" == "true" ]]; then
             CT_ARGS="--output-on-failure"
           fi
-          ARCANE_CHECK=1 ctest --test-dir ${{ env.BUILD_DIR }} --output-junit ${{ env.CT_RESULT_DIR }}/results.xml ${CT_ARGS} -E '${{inputs.excluded_tests}}' -LE '${{inputs.excluded_tests_with_labels}}' ${{inputs.ctest_additionnal_args}}
+          ARCANE_CHECK=1 ctest \
+            --test-dir ${{ env.BUILD_DIR }} \
+            --output-junit ${{ env.CT_RESULT_DIR }}/results.xml \
+            -E '${{inputs.excluded_tests}}' \
+            -LE '${{inputs.excluded_tests_with_labels}}' \
+            ${CT_ARGS} \
+            ${{inputs.ctest_additionnal_args}}
+
+      # https://www.ibm.com/docs/en/developer-for-zos/9.1.1?topic=formats-junit-xml-format
+      - name: Convert the results.xml to a valid JUnit XML file
+        if: ${{ failure() && inputs.execute_tests == 'true' }}
+        shell: bash
+        run: |
+          RESULT_ORI=${{ env.CT_RESULT_DIR }}/results.xml
+          RESULT_TMP=${{ env.CT_RESULT_DIR }}/results_ori.xml
+          mv $RESULT_ORI $RESULT_TMP
+          sed -e '/<testcase.*>/,/<\/testcase>/d' -e 's:</testsuite>::' -e 's/(empty)/CTest Arcane/' -e 's/hostname=""/hostname="GHA"/' $RESULT_TMP > $RESULT_ORI
+          sed -n '/<testcase.*status="fail">/,/<\/testcase>/p' $RESULT_TMP | sed -e 's:<failure message="".*/>::M' -e 's/<system-out>/<failure message="Logs Arcane:">\n/M' -e 's:</system-out>:</failure>:M' >> $RESULT_ORI
+          sed -n '/<testcase.*status="run">/,/<\/testcase>/p' $RESULT_TMP >> $RESULT_ORI
+          echo '</testsuite>' >> $RESULT_ORI
 
       - name: Display disks infos and size of directories
+        if: always()
         shell: bash
         run: |
           df -h
@@ -385,7 +405,7 @@ jobs:
           fi
 
       - name: Upload test artifact
-        if: failure()
+        if: ${{ failure() && inputs.execute_tests == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_key_prefix }}-test-artifact

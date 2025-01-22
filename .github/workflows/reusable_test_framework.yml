@@ -84,6 +84,11 @@ on:
         type: string
         required: false
         default: ''
+      ctest_output_on_failure:
+        description: 'Activate output on failure'
+        type: boolean
+        required: false
+        default: true
       ctest_additionnal_args:
         description: 'Additionnal arguments for testing'
         type: string
@@ -113,6 +118,8 @@ env:
   OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
   # To tell OpenMPI we may use more processus than available cores
   OMPI_MCA_rmaps_base_oversubscribe : true
+  ASAN_OPTIONS: 'detect_leaks=false'
+  
 
 jobs:
   build-install-test:
@@ -284,7 +291,7 @@ jobs:
           fi
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v3.1.0
+        uses: arcaneframework/gh_actions/build_install_framework@v3.2.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
@@ -341,12 +348,36 @@ jobs:
 
       - name: Test
         if: ${{ inputs.execute_tests }}
+        id: ctest
         shell: bash
         run: |
           mkdir -p ${{ env.CT_RESULT_DIR }}
-          ARCANE_CHECK=1 ctest --test-dir ${{ env.BUILD_DIR }} --output-junit ${{ env.CT_RESULT_DIR }}/results.xml  --output-on-failure -E '${{inputs.excluded_tests}}' -LE '${{inputs.excluded_tests_with_labels}}' ${{inputs.ctest_additionnal_args}}
+          if [[ "${{ inputs.ctest_output_on_failure }}" == "true" ]]; then
+            CT_ARGS="--output-on-failure"
+          fi
+          ARCANE_CHECK=1 ctest \
+            --test-dir ${{ env.BUILD_DIR }} \
+            --output-junit ${{ env.CT_RESULT_DIR }}/results.xml \
+            -E '${{inputs.excluded_tests}}' \
+            -LE '${{inputs.excluded_tests_with_labels}}' \
+            ${CT_ARGS} \
+            ${{inputs.ctest_additionnal_args}}
+
+      # https://www.ibm.com/docs/en/developer-for-zos/9.1.1?topic=formats-junit-xml-format
+      - name: Convert the results.xml to a valid JUnit XML file
+        if: ${{ failure() && steps.ctest.conclusion == 'failure' && inputs.execute_tests }}
+        shell: bash
+        run: |
+          RESULT_ORI=${{ env.CT_RESULT_DIR }}/results.xml
+          RESULT_TMP=${{ env.CT_RESULT_DIR }}/results_ori.xml
+          mv $RESULT_ORI $RESULT_TMP
+          sed -e '/<testcase.*>/,/<\/testcase>/d' -e 's:</testsuite>::' -e 's/(empty)/CTest Arcane/' -e 's/hostname=""/hostname="GHA"/' $RESULT_TMP > $RESULT_ORI
+          sed -n '/<testcase.*status="fail">/,/<\/testcase>/p' $RESULT_TMP | sed -e 's:<failure message="".*/>::M' -e 's/<system-out>/<failure message="Logs Arcane:">\n/M' -e 's:</system-out>:</failure>:M' >> $RESULT_ORI
+          sed -n '/<testcase.*status="run">/,/<\/testcase>/p' $RESULT_TMP >> $RESULT_ORI
+          echo '</testsuite>' >> $RESULT_ORI
 
       - name: Display disks infos and size of directories
+        if: always()
         shell: bash
         run: |
           df -h
@@ -377,7 +408,7 @@ jobs:
           fi
 
       - name: Upload test artifact
-        if: failure()
+        if: ${{ failure() && steps.ctest.conclusion == 'failure' && inputs.execute_tests }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_key_prefix }}-test-artifact

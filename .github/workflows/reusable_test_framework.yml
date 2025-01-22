@@ -291,7 +291,7 @@ jobs:
           fi
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v3.1.0
+        uses: arcaneframework/gh_actions/build_install_framework@v3.2.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}

@@ -74,6 +74,11 @@ on:
         type: boolean
         required: false
         default: true
+      cleanup_output_after_test:
+        description: 'Remove output dir of each successful test ?'
+        type: boolean
+        required: false
+        default: true
       excluded_tests:
         description: 'Regex with exclude tests'
         type: string
@@ -291,7 +296,7 @@ jobs:
           fi
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v3.2.0
+        uses: arcaneframework/gh_actions/build_install_framework@v3.3.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
@@ -354,6 +359,9 @@ jobs:
           mkdir -p ${{ env.CT_RESULT_DIR }}
           if [[ "${{ inputs.ctest_output_on_failure }}" == "true" ]]; then
             CT_ARGS="--output-on-failure"
+          fi
+          if [[ "${{ inputs.cleanup_output_after_test }}" == "true" ]]; then
+            export ARCANE_TEST_CLEANUP_AFTER_RUN=1
           fi
           ARCANE_CHECK=1 ctest \
             --test-dir ${{ env.BUILD_DIR }} \

@@ -116,6 +116,12 @@ on:
         required: false
         default: 'artifact'
 
+      runner_tag:
+        description: 'Runner tag'
+        type: string
+        required: false
+        default: 'ubuntu-latest'
+
 
 env:
   # OpenMPI
@@ -129,7 +135,7 @@ env:
 jobs:
   build-install-test:
     name: 'Build, install and test Arcane Framework'
-    runs-on: ubuntu-latest
+    runs-on: ${{inputs.runner_tag}}
     container:
       image: ${{inputs.image}}
 
@@ -161,12 +167,18 @@ jobs:
       - name: Create paths
         shell: bash
         run: |
+          rm -fr ${{ env.SOURCE_DIR }} \
+            ${{ env.BUILD_DIR }} \
+            ${{ env.INSTALL_DIR }} \
+            ${{ env.LOG_DIR }} \
+            ${{ env.CT_RESULT_DIR }}
           mkdir ${{ env.SOURCE_DIR }} \
             ${{ env.BUILD_DIR }} \
             ${{ env.INSTALL_DIR }} \
             ${{ env.LOG_DIR }} \
             ${{ env.CT_RESULT_DIR }} 
           if [[ "${{ inputs.use_cache }}" == "true" ]]; then
+            rm -fr ${{ env.CCACHE_DIR }}
             mkdir ${{ env.CCACHE_DIR }}
           fi
 

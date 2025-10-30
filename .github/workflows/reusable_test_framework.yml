@@ -121,6 +121,9 @@ on:
         type: string
         required: false
         default: 'ubuntu-latest'
+        # options:
+        # - 'ubuntu-latest'
+        # - 'm-1'
 
 
 env:
@@ -167,19 +170,13 @@ jobs:
       - name: Create paths
         shell: bash
         run: |
-          rm -fr ${{ env.SOURCE_DIR }} \
-            ${{ env.BUILD_DIR }} \
-            ${{ env.INSTALL_DIR }} \
-            ${{ env.LOG_DIR }} \
-            ${{ env.CT_RESULT_DIR }}
-          mkdir ${{ env.SOURCE_DIR }} \
+          mkdir -p ${{ env.SOURCE_DIR }} \
             ${{ env.BUILD_DIR }} \
             ${{ env.INSTALL_DIR }} \
             ${{ env.LOG_DIR }} \
             ${{ env.CT_RESULT_DIR }} 
           if [[ "${{ inputs.use_cache }}" == "true" ]]; then
-            rm -fr ${{ env.CCACHE_DIR }}
-            mkdir ${{ env.CCACHE_DIR }}
+            mkdir -p ${{ env.CCACHE_DIR }}
           fi
 
       - name: Set MPICH as default MPI
@@ -255,12 +252,22 @@ jobs:
           echo "m_date=$(/bin/date -u '+%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
       - name: Get cache for ccache tool
-        if: "${{ inputs.use_cache == 'true' }}"
+        if: "${{ inputs.use_cache == 'true' && inputs.runner_tag == 'ubuntu-latest' }}"
         uses: actions/cache@v4
         with:
           path: ${{env.CCACHE_DIR}}
           key: ${{ inputs.cache_key_prefix }}-${{ env.m_date }}-${{ github.run_number }}
           restore-keys: ${{ inputs.cache_key_prefix }}-
+
+      - name: Set ccache size
+        if: "${{ inputs.use_cache == 'true' }}"
+        shell: bash
+        run: |
+          if [[ "${{ inputs.runner_tag }}" == "ubuntu-latest" ]]; then
+            echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
+          else
+            echo "CCACHE_MAXSIZE=10G" >> $GITHUB_ENV
+          fi
 
       - name: Checkout framework
         uses: actions/checkout@v4
@@ -315,7 +322,7 @@ jobs:
           install_dir: ${{ env.INSTALL_DIR }}
           log_dir: ${{ env.LOG_DIR }}
           cache_dir: ${{ env.CCACHE_DIR }}
-          max_size_cache_dir: 1G
+          max_size_cache_dir: ${{ env.CCACHE_MAXSIZE }}
           ccache_debug_mode: ${{ inputs.ccache_debug_mode }}
           cmake_additionnal_args: '${{ env.CMAKE_ADD_ARGS }} ${{ inputs.cmake_additionnal_args }} ${{ env.M_RAND }}'
           verbose: ${{ inputs.verbose }}
@@ -434,3 +441,12 @@ jobs:
           name: ${{ inputs.artifact_key_prefix }}-test-artifact
           path: ${{ env.CT_RESULT_DIR }}
           retention-days: 7
+
+      - name: Clear dirs
+        shell: bash
+        run: |
+          rm -fr ${{ env.SOURCE_DIR }} \
+            ${{ env.BUILD_DIR }} \
+            ${{ env.INSTALL_DIR }} \
+            ${{ env.LOG_DIR }} \
+            ${{ env.CT_RESULT_DIR }}

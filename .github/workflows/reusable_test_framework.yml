@@ -136,9 +136,67 @@ env:
   
 
 jobs:
+  check-available-runners:
+    # Based on: https://github.com/orgs/community/discussions/20019#discussioncomment-13391111
+    # On vérifie si le runner demandé est accessible et disponible.
+    # Sinon on utilise un runner GH.
+    name: 'Choose runner'
+    runs-on: ubuntu-latest
+    outputs:
+      runner-type: ${{ steps.final.outputs.runner-type }}
+
+    steps:
+      # On exécute ce step si on demande un self-hosted runner.
+      # Ce step peut échouer si les secrets ne sont pas accessible
+      # (fork par exemple), dans ce cas, on continue quand même
+      # (le runner sera celui de GH, voir step final).
+      - name: Generate a token for reading available runners
+        if: "${{ inputs.runner_tag != 'ubuntu-latest' }}"
+        continue-on-error: true
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.RUNNERS_APP_ID }}
+          private-key: ${{ secrets.RUNNERS_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      # On exécute ce step si on demande un self-hosted runner
+      # et si le step précédent a fonctionné.
+      # Ce step peut échouer si l'app qui nous fournit le token
+      # n'est pas installée dans l'organization.
+      - name: Check available runners
+        if: "${{ inputs.runner_tag != 'ubuntu-latest' && steps.generate-token.outcome == 'success' }}"
+        continue-on-error: true
+        id: set-runner
+        env:
+           AUTH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          runners=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $AUTH_TOKEN" "$GITHUB_API_URL/orgs/$GITHUB_REPOSITORY_OWNER/actions/runners")
+          available=$(echo "$runners" | jq '.runners[] | select(.status == "online" and .labels[].name == "${{ inputs.runner_tag }}")')
+          if [ -n "$available" ]; then
+            echo "RUNNER=${{ inputs.runner_tag }}" >> $GITHUB_ENV
+          else
+            echo "RUNNER=ubuntu-latest" >> $GITHUB_ENV
+            echo "::error::Self-hosted runner is not available, run on GH runner"
+          fi
+
+      # Le self-hosted runner est choisi s'il est accessible et disponible.
+      # Sinon, on prend un runner GH. 
+      - name: Final choose
+        id: final
+        run: |
+          if [[ "${{ inputs.runner_tag }}" == "ubuntu-latest" || "${{ steps.set-runner.outcome }}" != "success" ]]; then
+            echo "runner-type=ubuntu-latest" >> $GITHUB_OUTPUT
+            echo "::notice::Chosen runner is : ubuntu-latest"
+          else
+            echo "runner-type=${{ env.RUNNER }}" >> $GITHUB_OUTPUT
+            echo "::notice::Chosen runner is : ${{ env.RUNNER }}"
+          fi
+
   build-install-test:
     name: 'Build, install and test Arcane Framework'
-    runs-on: ${{inputs.runner_tag}}
+    needs: check-available-runners
+    runs-on: ${{ needs.check-available-runners.outputs.runner-type }}
     container:
       image: ${{inputs.image}}
 

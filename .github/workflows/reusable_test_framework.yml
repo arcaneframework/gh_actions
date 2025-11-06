@@ -336,7 +336,7 @@ jobs:
           fi
 
       - name: Checkout framework
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: ${{ env.SOURCE_DIR }}
           submodules: true
@@ -400,11 +400,16 @@ jobs:
 
       - name: Upload log artifact
         if: ${{ failure() || inputs.ccache_debug_mode == 'true' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ inputs.artifact_key_prefix }}-log_config_build-artifact
           path: ${{ env.LOG_DIR }}
           retention-days: 7
+          # Fix temporaire : Plantage lors de l'utilisation de self-hosted runners si l'on n'ajoute pas ces lignes.
+          if-no-files-found: warn
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false
 
       - name: Display disks infos and size of directories
         shell: bash
@@ -502,11 +507,16 @@ jobs:
 
       - name: Upload test artifact
         if: ${{ failure() && steps.ctest.conclusion == 'failure' && inputs.execute_tests }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ inputs.artifact_key_prefix }}-test-artifact
           path: ${{ env.CT_RESULT_DIR }}
           retention-days: 7
+          # Fix temporaire : Plantage lors de l'utilisation de self-hosted runners si l'on n'ajoute pas ces lignes.
+          if-no-files-found: warn
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false
 
       - name: Clear dirs
         if: always()

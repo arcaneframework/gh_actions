@@ -136,14 +136,14 @@ env:
   
 
 jobs:
-  check-available-runners:
+  check-runner:
     # Based on: https://github.com/orgs/community/discussions/20019#discussioncomment-13391111
     # On vérifie si le runner demandé est accessible et disponible.
     # Sinon on utilise un runner GH.
-    name: 'Choose runner'
+    name: 'Check runner'
     runs-on: ubuntu-latest
     outputs:
-      runner-type: ${{ steps.final.outputs.runner-type }}
+      runner-tag: ${{ steps.final.outputs.runner-tag }}
 
     steps:
       # On exécute ce step si on demande un self-hosted runner.
@@ -185,18 +185,21 @@ jobs:
       - name: Final choose
         id: final
         run: |
-          if [[ "${{ inputs.runner_tag }}" == "ubuntu-latest" || "${{ steps.set-runner.outcome }}" != "success" ]]; then
-            echo "runner-type=ubuntu-latest" >> $GITHUB_OUTPUT
-            echo "::notice::Chosen runner is : ubuntu-latest"
+          if [[ "${{ inputs.runner_tag }}" == "ubuntu-latest" ]]; then
+            echo "runner-tag=ubuntu-latest" >> $GITHUB_OUTPUT
+            echo "::notice::The chosen runner is ubuntu-latest"
+          elif [[ "${{ steps.set-runner.outcome }}" != "success" ]]; then
+            echo "runner-tag=ubuntu-latest" >> $GITHUB_OUTPUT
+            echo "::warning::The selected runner is ubuntu-latest -- You requested ${{ inputs.runner_tag }} but it is not available."
           else
-            echo "runner-type=${{ env.RUNNER }}" >> $GITHUB_OUTPUT
-            echo "::notice::Chosen runner is : ${{ env.RUNNER }}"
+            echo "runner-tag=${{ env.RUNNER }}" >> $GITHUB_OUTPUT
+            echo "::notice::The chosen runner is ${{ env.RUNNER }}"
           fi
 
   build-install-test:
     name: 'Build, install and test Arcane Framework'
-    needs: check-available-runners
-    runs-on: ${{ needs.check-available-runners.outputs.runner-type }}
+    needs: check-runner
+    runs-on: ${{ needs.check-runner.outputs.runner-tag }}
     container:
       image: ${{inputs.image}}
 
@@ -225,9 +228,14 @@ jobs:
             echo "CCACHE_DIR=" >> $GITHUB_ENV
           fi
 
-      - name: Create paths
+      - name: Create directories
         shell: bash
         run: |
+          rm -fr ${{ env.SOURCE_DIR }} \
+            ${{ env.BUILD_DIR }} \
+            ${{ env.INSTALL_DIR }} \
+            ${{ env.LOG_DIR }} \
+            ${{ env.CT_RESULT_DIR }}
           mkdir -p ${{ env.SOURCE_DIR }} \
             ${{ env.BUILD_DIR }} \
             ${{ env.INSTALL_DIR }} \
@@ -310,7 +318,7 @@ jobs:
           echo "m_date=$(/bin/date -u '+%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
       - name: Get cache for ccache tool
-        if: "${{ inputs.use_cache == 'true' && inputs.runner_tag == 'ubuntu-latest' }}"
+        if: "${{ inputs.use_cache == 'true' && needs.check-runner.outputs.runner-tag == 'ubuntu-latest' }}"
         uses: actions/cache@v4
         with:
           path: ${{env.CCACHE_DIR}}
@@ -321,7 +329,7 @@ jobs:
         if: "${{ inputs.use_cache == 'true' }}"
         shell: bash
         run: |
-          if [[ "${{ inputs.runner_tag }}" == "ubuntu-latest" ]]; then
+          if [[ "${{ needs.check-runner.outputs.runner-tag }}" == "ubuntu-latest" ]]; then
             echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
           else
             echo "CCACHE_MAXSIZE=10G" >> $GITHUB_ENV
@@ -501,6 +509,7 @@ jobs:
           retention-days: 7
 
       - name: Clear dirs
+        if: always()
         shell: bash
         run: |
           rm -fr ${{ env.SOURCE_DIR }} \

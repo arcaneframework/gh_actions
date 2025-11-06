@@ -116,6 +116,15 @@ on:
         required: false
         default: 'artifact'
 
+      runner_tag:
+        description: 'Runner tag'
+        type: string
+        required: false
+        default: 'ubuntu-latest'
+        # options:
+        # - 'ubuntu-latest'
+        # - 'm-1'
+
 
 env:
   # OpenMPI
@@ -127,9 +136,70 @@ env:
   
 
 jobs:
+  check-runner:
+    # Based on: https://github.com/orgs/community/discussions/20019#discussioncomment-13391111
+    # On vérifie si le runner demandé est accessible et disponible.
+    # Sinon on utilise un runner GH.
+    name: 'Check runner'
+    runs-on: ubuntu-latest
+    outputs:
+      runner-tag: ${{ steps.final.outputs.runner-tag }}
+
+    steps:
+      # On exécute ce step si on demande un self-hosted runner.
+      # Ce step peut échouer si les secrets ne sont pas accessible
+      # (fork par exemple), dans ce cas, on continue quand même
+      # (le runner sera celui de GH, voir step final).
+      - name: Generate a token for reading available runners
+        if: "${{ inputs.runner_tag != 'ubuntu-latest' }}"
+        continue-on-error: true
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.RUNNERS_APP_ID }}
+          private-key: ${{ secrets.RUNNERS_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      # On exécute ce step si on demande un self-hosted runner
+      # et si le step précédent a fonctionné.
+      # Ce step peut échouer si l'app qui nous fournit le token
+      # n'est pas installée dans l'organization.
+      - name: Check available runners
+        if: "${{ inputs.runner_tag != 'ubuntu-latest' && steps.generate-token.outcome == 'success' }}"
+        continue-on-error: true
+        id: set-runner
+        env:
+           AUTH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          runners=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $AUTH_TOKEN" "$GITHUB_API_URL/orgs/$GITHUB_REPOSITORY_OWNER/actions/runners")
+          available=$(echo "$runners" | jq '.runners[] | select(.status == "online" and .labels[].name == "${{ inputs.runner_tag }}")')
+          if [ -n "$available" ]; then
+            echo "RUNNER=${{ inputs.runner_tag }}" >> $GITHUB_ENV
+          else
+            echo "RUNNER=ubuntu-latest" >> $GITHUB_ENV
+            echo "::error::Self-hosted runner is not available, run on GH runner"
+          fi
+
+      # Le self-hosted runner est choisi s'il est accessible et disponible.
+      # Sinon, on prend un runner GH. 
+      - name: Final choose
+        id: final
+        run: |
+          if [[ "${{ inputs.runner_tag }}" == "ubuntu-latest" ]]; then
+            echo "runner-tag=ubuntu-latest" >> $GITHUB_OUTPUT
+            echo "::notice::The chosen runner is ubuntu-latest"
+          elif [[ "${{ steps.set-runner.outcome }}" != "success" ]]; then
+            echo "runner-tag=ubuntu-latest" >> $GITHUB_OUTPUT
+            echo "::warning::The selected runner is ubuntu-latest -- You requested ${{ inputs.runner_tag }} but it is not available."
+          else
+            echo "runner-tag=${{ env.RUNNER }}" >> $GITHUB_OUTPUT
+            echo "::notice::The chosen runner is ${{ env.RUNNER }}"
+          fi
+
   build-install-test:
     name: 'Build, install and test Arcane Framework'
-    runs-on: ubuntu-latest
+    needs: check-runner
+    runs-on: ${{ needs.check-runner.outputs.runner-tag }}
     container:
       image: ${{inputs.image}}
 
@@ -158,16 +228,21 @@ jobs:
             echo "CCACHE_DIR=" >> $GITHUB_ENV
           fi
 
-      - name: Create paths
+      - name: Create directories
         shell: bash
         run: |
-          mkdir ${{ env.SOURCE_DIR }} \
+          rm -fr ${{ env.SOURCE_DIR }} \
+            ${{ env.BUILD_DIR }} \
+            ${{ env.INSTALL_DIR }} \
+            ${{ env.LOG_DIR }} \
+            ${{ env.CT_RESULT_DIR }}
+          mkdir -p ${{ env.SOURCE_DIR }} \
             ${{ env.BUILD_DIR }} \
             ${{ env.INSTALL_DIR }} \
             ${{ env.LOG_DIR }} \
             ${{ env.CT_RESULT_DIR }} 
           if [[ "${{ inputs.use_cache }}" == "true" ]]; then
-            mkdir ${{ env.CCACHE_DIR }}
+            mkdir -p ${{ env.CCACHE_DIR }}
           fi
 
       - name: Set MPICH as default MPI
@@ -243,15 +318,25 @@ jobs:
           echo "m_date=$(/bin/date -u '+%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
       - name: Get cache for ccache tool
-        if: "${{ inputs.use_cache == 'true' }}"
+        if: "${{ inputs.use_cache == 'true' && needs.check-runner.outputs.runner-tag == 'ubuntu-latest' }}"
         uses: actions/cache@v4
         with:
           path: ${{env.CCACHE_DIR}}
           key: ${{ inputs.cache_key_prefix }}-${{ env.m_date }}-${{ github.run_number }}
           restore-keys: ${{ inputs.cache_key_prefix }}-
 
+      - name: Set ccache size
+        if: "${{ inputs.use_cache == 'true' }}"
+        shell: bash
+        run: |
+          if [[ "${{ needs.check-runner.outputs.runner-tag }}" == "ubuntu-latest" ]]; then
+            echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
+          else
+            echo "CCACHE_MAXSIZE=10G" >> $GITHUB_ENV
+          fi
+
       - name: Checkout framework
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: ${{ env.SOURCE_DIR }}
           submodules: true
@@ -296,14 +381,14 @@ jobs:
           fi
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v3.3.0
+        uses: arcaneframework/gh_actions/build_install_framework@v3.4.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
           install_dir: ${{ env.INSTALL_DIR }}
           log_dir: ${{ env.LOG_DIR }}
           cache_dir: ${{ env.CCACHE_DIR }}
-          max_size_cache_dir: 1G
+          max_size_cache_dir: ${{ env.CCACHE_MAXSIZE }}
           ccache_debug_mode: ${{ inputs.ccache_debug_mode }}
           cmake_additionnal_args: '${{ env.CMAKE_ADD_ARGS }} ${{ inputs.cmake_additionnal_args }} ${{ env.M_RAND }}'
           verbose: ${{ inputs.verbose }}
@@ -315,11 +400,16 @@ jobs:
 
       - name: Upload log artifact
         if: ${{ failure() || inputs.ccache_debug_mode == 'true' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ inputs.artifact_key_prefix }}-log_config_build-artifact
           path: ${{ env.LOG_DIR }}
           retention-days: 7
+          # Fix temporaire : Plantage lors de l'utilisation de self-hosted runners si l'on n'ajoute pas ces lignes.
+          if-no-files-found: warn
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false
 
       - name: Display disks infos and size of directories
         shell: bash
@@ -417,8 +507,23 @@ jobs:
 
       - name: Upload test artifact
         if: ${{ failure() && steps.ctest.conclusion == 'failure' && inputs.execute_tests }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ inputs.artifact_key_prefix }}-test-artifact
           path: ${{ env.CT_RESULT_DIR }}
           retention-days: 7
+          # Fix temporaire : Plantage lors de l'utilisation de self-hosted runners si l'on n'ajoute pas ces lignes.
+          if-no-files-found: warn
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false
+
+      - name: Clear dirs
+        if: always()
+        shell: bash
+        run: |
+          rm -fr ${{ env.SOURCE_DIR }} \
+            ${{ env.BUILD_DIR }} \
+            ${{ env.INSTALL_DIR }} \
+            ${{ env.LOG_DIR }} \
+            ${{ env.CT_RESULT_DIR }}

@@ -223,7 +223,7 @@ jobs:
           echo "LOG_DIR=${GITHUB_WORKSPACE}/log" >> $GITHUB_ENV
           echo "CT_RESULT_DIR=${GITHUB_WORKSPACE}/test" >> $GITHUB_ENV
           if [[ "${{ inputs.use_cache }}" == "true" ]]; then
-            echo "CCACHE_DIR=${GITHUB_WORKSPACE}/ccache" >> $GITHUB_ENV
+            echo "CCACHE_DIR=${GITHUB_WORKSPACE}/../ccache" >> $GITHUB_ENV
           else
             echo "CCACHE_DIR=" >> $GITHUB_ENV
           fi
@@ -325,7 +325,7 @@ jobs:
           key: ${{ inputs.cache_key_prefix }}-${{ env.m_date }}-${{ github.run_number }}
           restore-keys: ${{ inputs.cache_key_prefix }}-
 
-      - name: Set ccache size
+      - name: Set CCache size
         if: "${{ inputs.use_cache == 'true' }}"
         shell: bash
         run: |

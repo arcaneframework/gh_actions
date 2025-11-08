@@ -138,18 +138,18 @@ env:
 jobs:
   check-runner:
     # Based on: https://github.com/orgs/community/discussions/20019#discussioncomment-13391111
-    # On vérifie si le runner demandé est accessible et disponible.
-    # Sinon on utilise un runner GH.
+    # We check whether the requested runner is available.
+    # Otherwise, we use a GH runner.
     name: 'Check runner'
     runs-on: ubuntu-latest
     outputs:
       runner-tag: ${{ steps.final.outputs.runner-tag }}
 
     steps:
-      # On exécute ce step si on demande un self-hosted runner.
-      # Ce step peut échouer si les secrets ne sont pas accessible
-      # (fork par exemple), dans ce cas, on continue quand même
-      # (le runner sera celui de GH, voir step final).
+      # This step is executed if a self-hosted runner is requested.
+      # This step may fail if the secrets are not accessible (fork,
+      # for example), in this case we continue anyway (the runner
+      # will be a GH runner, see "final" step).
       - name: Generate a token for reading available runners
         if: "${{ inputs.runner_tag != 'ubuntu-latest' }}"
         continue-on-error: true
@@ -160,10 +160,10 @@ jobs:
           private-key: ${{ secrets.RUNNERS_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      # On exécute ce step si on demande un self-hosted runner
-      # et si le step précédent a fonctionné.
-      # Ce step peut échouer si l'app qui nous fournit le token
-      # n'est pas installée dans l'organization.
+      # This step is executed if a self-hosted runner is requested
+      # and if the previous step was successful.
+      # This step may fail if the app that provides us the
+      # token is not installed in the organization.
       - name: Check available runners
         if: "${{ inputs.runner_tag != 'ubuntu-latest' && steps.generate-token.outcome == 'success' }}"
         continue-on-error: true
@@ -180,8 +180,9 @@ jobs:
             echo "::error::Self-hosted runner is not available, run on GH runner"
           fi
 
-      # Le self-hosted runner est choisi s'il est accessible et disponible.
-      # Sinon, on prend un runner GH. 
+      # The self-hosted runner is chosen if it is accessible
+      # and available.
+      # Otherwise, a GH runner is used. 
       - name: Final choose
         id: final
         run: |
@@ -214,6 +215,7 @@ jobs:
         run: |
           df -h
 
+      # actions/cache dosen't accept . or .. in its path.
       - name: Define environment paths
         shell: bash
         run: |
@@ -223,7 +225,11 @@ jobs:
           echo "LOG_DIR=${GITHUB_WORKSPACE}/log" >> $GITHUB_ENV
           echo "CT_RESULT_DIR=${GITHUB_WORKSPACE}/test" >> $GITHUB_ENV
           if [[ "${{ inputs.use_cache }}" == "true" ]]; then
-            echo "CCACHE_DIR=${GITHUB_WORKSPACE}/../ccache" >> $GITHUB_ENV
+            if [[ "${{ needs.check-runner.outputs.runner-tag }}" == "ubuntu-latest" ]]; then
+              echo "CCACHE_DIR=${GITHUB_WORKSPACE}/ccache" >> $GITHUB_ENV
+            else
+              echo "CCACHE_DIR=${GITHUB_WORKSPACE}/../ccache" >> $GITHUB_ENV
+            fi
           else
             echo "CCACHE_DIR=" >> $GITHUB_ENV
           fi
@@ -381,7 +387,7 @@ jobs:
           fi
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v3.4.0
+        uses: arcaneframework/gh_actions/build_install_framework@v3.4.1
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}

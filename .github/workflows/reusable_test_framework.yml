@@ -140,13 +140,12 @@ jobs:
         run: |
           touch aaa.log
 
-      - name: Upload log artifact
-        uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v4
         with:
           include-hidden-files: 'False'
           name: test
           path: aaa.log
-          overwrite: abcd
+          overwrite: 'False'
 
       - name: Clear dirs
         if: always()

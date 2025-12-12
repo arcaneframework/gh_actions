@@ -248,8 +248,7 @@ jobs:
           name: ${{ inputs.artifact_key_prefix }}-log_config_build-artifact
           path: ${{ env.LOG_DIR }}
           retention-days: 7
-          # Fix temporaire : Plantage lors de l'utilisation de self-hosted runners si l'on n'ajoute pas ces lignes.
-          include-hidden-files: false
+          include-hidden-files: FALSE
           if-no-files-found: warn
           compression-level: 6
           overwrite: false

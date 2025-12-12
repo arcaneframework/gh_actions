@@ -136,125 +136,27 @@ env:
   
 
 jobs:
-  check-runner:
-    # Based on: https://github.com/orgs/community/discussions/20019#discussioncomment-13391111
-    # We check whether the requested runner is available.
-    # Otherwise, we use a GH runner.
-    name: 'Check runner'
-    runs-on: ubuntu-latest
-    outputs:
-      runner-tag: ${{ steps.final.outputs.runner-tag }}
-
-    steps:
-      # This step is executed if a self-hosted runner is requested.
-      # This step may fail if the secrets are not accessible (fork,
-      # for example), in this case we continue anyway (the runner
-      # will be a GH runner, see "final" step).
-      - name: Generate a token for reading available runners
-        if: "${{ inputs.runner_tag != 'ubuntu-latest' }}"
-        continue-on-error: true
-        id: generate-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.RUNNERS_APP_ID }}
-          private-key: ${{ secrets.RUNNERS_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      # This step is executed if a self-hosted runner is requested
-      # and if the previous step was successful.
-      # This step may fail if the app that provides us the
-      # token is not installed in the organization.
-      - name: Check available runners
-        if: "${{ inputs.runner_tag != 'ubuntu-latest' && steps.generate-token.outcome == 'success' }}"
-        continue-on-error: true
-        id: set-runner
-        env:
-           AUTH_TOKEN: ${{ steps.generate-token.outputs.token }}
-        run: |
-          runners=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $AUTH_TOKEN" "$GITHUB_API_URL/orgs/$GITHUB_REPOSITORY_OWNER/actions/runners")
-          available=$(echo "$runners" | jq '.runners[] | select(.status == "online" and .labels[].name == "${{ inputs.runner_tag }}")')
-          if [ -n "$available" ]; then
-            echo "RUNNER=${{ inputs.runner_tag }}" >> $GITHUB_ENV
-          else
-            echo "RUNNER=ubuntu-latest" >> $GITHUB_ENV
-            echo "::error::Self-hosted runner is not available, run on GH runner"
-          fi
-
-      # The self-hosted runner is chosen if it is accessible
-      # and available.
-      # Otherwise, a GH runner is used. 
-      - name: Final choose
-        id: final
-        run: |
-          if [[ "${{ inputs.runner_tag }}" == "ubuntu-latest" ]]; then
-            echo "runner-tag=ubuntu-latest" >> $GITHUB_OUTPUT
-            echo "::notice::The chosen runner is ubuntu-latest"
-          elif [[ "${{ steps.set-runner.outcome }}" != "success" ]]; then
-            echo "runner-tag=ubuntu-latest" >> $GITHUB_OUTPUT
-            echo "::warning::The selected runner is ubuntu-latest -- You requested ${{ inputs.runner_tag }} but it is not available."
-          else
-            echo "runner-tag=${{ env.RUNNER }}" >> $GITHUB_OUTPUT
-            echo "::notice::The chosen runner is ${{ env.RUNNER }}"
-          fi
 
   build-install-test:
     name: 'Build, install and test Arcane Framework'
-    needs: check-runner
-    runs-on: ${{ needs.check-runner.outputs.runner-tag }}
+    runs-on: m-1
     container:
       image: ${{inputs.image}}
 
     steps:
-
-      # actions/cache dosen't accept . or .. in its path.
-      - name: Define environment paths
-        shell: bash
-        run: |
-          echo "SOURCE_DIR=${GITHUB_WORKSPACE}/framework" >> $GITHUB_ENV
-          echo "BUILD_DIR=${GITHUB_WORKSPACE}/build" >> $GITHUB_ENV
-          echo "INSTALL_DIR=${GITHUB_WORKSPACE}/install" >> $GITHUB_ENV
-          echo "LOG_DIR=${GITHUB_WORKSPACE}/log" >> $GITHUB_ENV
-          echo "CT_RESULT_DIR=${GITHUB_WORKSPACE}/test" >> $GITHUB_ENV
-          if [[ "${{ inputs.use_cache }}" == "true" ]]; then
-            if [[ "${{ needs.check-runner.outputs.runner-tag }}" == "ubuntu-latest" ]]; then
-              echo "CCACHE_DIR=${GITHUB_WORKSPACE}/ccache" >> $GITHUB_ENV
-            else
-              echo "CCACHE_DIR=${GITHUB_WORKSPACE}/../ccache" >> $GITHUB_ENV
-            fi
-          else
-            echo "CCACHE_DIR=" >> $GITHUB_ENV
-          fi
-
       - name: Create directories
         shell: bash
         run: |
-          rm -fr ${{ env.SOURCE_DIR }} \
-            ${{ env.BUILD_DIR }} \
-            ${{ env.INSTALL_DIR }} \
-            ${{ env.LOG_DIR }} \
-            ${{ env.CT_RESULT_DIR }}
-          mkdir -p ${{ env.SOURCE_DIR }} \
-            ${{ env.BUILD_DIR }} \
-            ${{ env.INSTALL_DIR }} \
-            ${{ env.LOG_DIR }} \
-            ${{ env.CT_RESULT_DIR }} 
-          if [[ "${{ inputs.use_cache }}" == "true" ]]; then
-            mkdir -p ${{ env.CCACHE_DIR }}
-          fi
+          touch aaa.log
 
       - name: Upload log artifact
         uses: actions/upload-artifact@v4.3.6
         with:
-          name: ${{ inputs.artifact_key_prefix }}-log_config_build-artifact
-          path: ${{ env.LOG_DIR }}
-          retention-days: 7
+          name: test
+          path: aaa.log
 
       - name: Clear dirs
         if: always()
         shell: bash
         run: |
-          rm -fr ${{ env.SOURCE_DIR }} \
-            ${{ env.BUILD_DIR }} \
-            ${{ env.INSTALL_DIR }} \
-            ${{ env.LOG_DIR }} \
-            ${{ env.CT_RESULT_DIR }}
+          rm aaa.log

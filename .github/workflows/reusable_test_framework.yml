@@ -243,7 +243,7 @@ jobs:
           fi
 
       - name: Upload log artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.artifact_key_prefix }}-log_config_build-artifact
           path: ${{ env.LOG_DIR }}

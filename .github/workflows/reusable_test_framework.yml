@@ -130,7 +130,7 @@ jobs:
 
   build-install-test:
     name: 'Build, install and test Arcane Framework'
-    runs-on: m-1
+    runs-on: m-1-r-1
     container:
       image: ${{inputs.image}}
 
@@ -140,9 +140,9 @@ jobs:
         run: |
           touch aaa.log
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
-          include-hidden-files: 'False'
+          include-hidden-files: TRUE
           name: test
           path: aaa.log
           overwrite: 'False'

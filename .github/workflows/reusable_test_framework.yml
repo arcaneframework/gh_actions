@@ -152,6 +152,7 @@ jobs:
       - name: Upload log artifact
         uses: actions/upload-artifact@v5
         with:
+          include-hidden-files: 'False'
           name: test
           path: aaa.log
 

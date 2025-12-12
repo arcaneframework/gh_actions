@@ -124,15 +124,6 @@ on:
         # options:
         # - 'ubuntu-latest'
         # - 'm-1'
-
-
-env:
-  # OpenMPI
-  OMPI_ALLOW_RUN_AS_ROOT: 1
-  OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
-  # To tell OpenMPI we may use more processus than available cores
-  OMPI_MCA_rmaps_base_oversubscribe : true
-  ASAN_OPTIONS: 'detect_leaks=false'
   
 
 jobs:
@@ -155,6 +146,7 @@ jobs:
           include-hidden-files: 'False'
           name: test
           path: aaa.log
+          overwrite: abcd
 
       - name: Clear dirs
         if: always()

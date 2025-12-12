@@ -243,15 +243,11 @@ jobs:
           fi
 
       - name: Upload log artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4.3.6
         with:
           name: ${{ inputs.artifact_key_prefix }}-log_config_build-artifact
           path: ${{ env.LOG_DIR }}
           retention-days: 7
-          include-hidden-files: FALSE
-          if-no-files-found: warn
-          compression-level: 6
-          overwrite: false
 
       - name: Clear dirs
         if: always()

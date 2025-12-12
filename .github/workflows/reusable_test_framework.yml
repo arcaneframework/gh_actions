@@ -141,8 +141,9 @@ jobs:
           touch aaa.log
 
       - uses: actions/upload-artifact@v6
+        env:
+          INPUT_INCLUDE-HIDDEN-FILES: TRUE
         with:
-          include-hidden-files: TRUE
           name: test
           path: aaa.log
           overwrite: 'False'

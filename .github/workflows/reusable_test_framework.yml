@@ -154,7 +154,7 @@ jobs:
         if: "${{ inputs.runner_tag != 'ubuntu-latest' }}"
         continue-on-error: true
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.RUNNERS_APP_ID }}
           private-key: ${{ secrets.RUNNERS_PRIVATE_KEY }}
@@ -325,7 +325,7 @@ jobs:
 
       - name: Get cache for ccache tool
         if: "${{ inputs.use_cache == 'true' && needs.check-runner.outputs.runner-tag == 'ubuntu-latest' }}"
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{env.CCACHE_DIR}}
           key: ${{ inputs.cache_key_prefix }}-${{ env.m_date }}-${{ github.run_number }}
@@ -342,7 +342,7 @@ jobs:
           fi
 
       - name: Checkout framework
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: ${{ env.SOURCE_DIR }}
           submodules: true
@@ -406,7 +406,7 @@ jobs:
 
       - name: Upload log artifact
         if: ${{ failure() || inputs.ccache_debug_mode == 'true' }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.artifact_key_prefix }}-log_config_build-artifact
           path: ${{ env.LOG_DIR }}
@@ -513,7 +513,7 @@ jobs:
 
       - name: Upload test artifact
         if: ${{ failure() && steps.ctest.conclusion == 'failure' && inputs.execute_tests }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.artifact_key_prefix }}-test-artifact
           path: ${{ env.CT_RESULT_DIR }}

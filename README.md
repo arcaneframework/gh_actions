@@ -74,7 +74,7 @@ jobs:
           source /root/scripts/use_gcc-14.sh
 
       - name: Checkout framework
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: 'arcaneframework/framework'
           path: ${{ env.SOURCE_DIR }}

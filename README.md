@@ -42,7 +42,7 @@ This composite action can work with any docker image with the necessary/recommen
 | `with_samples`  | Build samples. Need an `install_dir`. | No (`false`) |
 | `with_userdoc`  | Build the user documentation. Available in `build_dir/share/userdoc`. | No (`false`) |
 | `with_devdoc`  | Build the dev documentation. Available in `build_dir/share/devdoc`. | No (`false`) |
-| `with_aliendoc`  | Build the Alien documentation. Available in `build_dir/share/aliendoc`. | No (`false`) |
+| `with_aliendoc`  | Build the Alien documentation. Available in `build_dir/share/alienuserdoc` and `build_dir/share/aliendevdoc`. | No (`false`) |
 
 ### Example for the composite action
 https://github.com/arcaneframework/gh_actions/blob/master/.github/workflows/reusable_test_framework.yml

@@ -253,8 +253,9 @@ runs:
       if: "${{ inputs.with_aliendoc == 'true' }}"
       shell: bash
       run: |
-        cmake --build ${{ inputs.build_dir }} --target aliendoc
-        
+        cmake --build ${{ inputs.build_dir }} --target alienuserdoc
+        cmake --build ${{ inputs.build_dir }} --target aliendevdoc
+
     - name: Configure samples
       if: "${{ inputs.with_samples == 'true' && inputs.install_dir != '' }}"
       shell: bash

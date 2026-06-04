@@ -124,6 +124,11 @@ on:
         # options:
         # - 'ubuntu-latest'
         # - 'm-1'
+      runner_gpu:
+        description: 'Use GPU of runner ? (true/false)'
+        type: string
+        required: false
+        default: 'false'
 
 
 env:
@@ -144,6 +149,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       runner-tag: ${{ steps.final.outputs.runner-tag }}
+      runner-gpu: ${{ steps.final.outputs.runner-gpu }}
 
     steps:
       # This step is executed if a self-hosted runner is requested.
@@ -188,12 +194,15 @@ jobs:
         run: |
           if [[ "${{ inputs.runner_tag }}" == "ubuntu-latest" ]]; then
             echo "runner-tag=ubuntu-latest" >> $GITHUB_OUTPUT
+            echo "runner-gpu=false" >> $GITHUB_OUTPUT
             echo "::notice::The chosen runner is ubuntu-latest"
           elif [[ "${{ steps.set-runner.outcome }}" != "success" ]]; then
             echo "runner-tag=ubuntu-latest" >> $GITHUB_OUTPUT
+            echo "runner-gpu=false" >> $GITHUB_OUTPUT
             echo "::warning::The selected runner is ubuntu-latest -- You requested ${{ inputs.runner_tag }} but it is not available."
           else
             echo "runner-tag=${{ env.RUNNER }}" >> $GITHUB_OUTPUT
+            echo "runner-gpu=${{ inputs.runner_gpu }}" >> $GITHUB_OUTPUT
             echo "::notice::The chosen runner is ${{ env.RUNNER }}"
           fi
 
@@ -203,6 +212,7 @@ jobs:
     runs-on: ${{ needs.check-runner.outputs.runner-tag }}
     container:
       image: ${{inputs.image}}
+      options: ${{ case(needs.check-runner.outputs.runner-gpu == 'true', '--runtime nvidia --gpus all', '') }}
 
     steps:
       - name: Display CPU infos
@@ -306,6 +316,9 @@ jobs:
             echo "ACC_COMPILER=acpp" >> $GITHUB_ENV
             echo "AUTO_USE_MOLD=true" >> $GITHUB_ENV
           fi
+          if [[ "${{ needs.check-runner.outputs.runner-gpu }}" == "false" ]] || [[ "${{ inputs.acc_compilo_name }}" != "cuda" ]]; then
+            echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DARCANE_EXECUTE_ACCELERATOR_GOOGLETEST=OFF" >> $GITHUB_ENV
+          fi
 
       - name: Set MOLD
         shell: bash
@@ -387,7 +400,7 @@ jobs:
           fi
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v3.5.1
+        uses: arcaneframework/gh_actions/build_install_framework@v3.6.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
@@ -411,11 +424,6 @@ jobs:
           name: ${{ inputs.artifact_key_prefix }}-log_config_build-artifact
           path: ${{ env.LOG_DIR }}
           retention-days: 7
-          # Fix temporaire : Plantage lors de l'utilisation de self-hosted runners si l'on n'ajoute pas ces lignes.
-          if-no-files-found: warn
-          compression-level: 6
-          overwrite: false
-          include-hidden-files: false
 
       - name: Display disks infos and size of directories
         shell: bash
@@ -447,8 +455,24 @@ jobs:
             echo "::endgroup::"
           fi
 
+      # On gère le failback.
+      # Si l'utilisateur a demandé un runner GPU mais que le runner final n'en a pas, on bloque les tests.
+      - name: Check if the tests can be executed
+        shell: bash
+        run: |
+          if [[ "${{ inputs.execute_tests }}" == "true" ]]; then
+            if [[ "${{ inputs.runner_gpu }}" == "false" ]] || [[ "${{ needs.check-runner.outputs.runner-gpu }}" == "true" ]]; then
+              echo "EXECUTE_TESTS=true" >> $GITHUB_ENV
+            else
+              echo "EXECUTE_TESTS=false" >> $GITHUB_ENV
+            fi
+          else
+            echo "EXECUTE_TESTS=false" >> $GITHUB_ENV
+          fi
+
+      # Les tests ne sont pas exécutés si on compile pour GPU mais sans GPU.
       - name: Test
-        if: ${{ inputs.execute_tests }}
+        if: ${{ env.EXECUTE_TESTS }}
         id: ctest
         shell: bash
         run: |
@@ -469,7 +493,7 @@ jobs:
 
       # https://www.ibm.com/docs/en/developer-for-zos/9.1.1?topic=formats-junit-xml-format
       - name: Convert the results.xml to a valid JUnit XML file
-        if: ${{ failure() && steps.ctest.conclusion == 'failure' && inputs.execute_tests }}
+        if: ${{ failure() && steps.ctest.conclusion == 'failure' && env.EXECUTE_TESTS }}
         shell: bash
         run: |
           RESULT_ORI=${{ env.CT_RESULT_DIR }}/results.xml
@@ -512,17 +536,12 @@ jobs:
           fi
 
       - name: Upload test artifact
-        if: ${{ failure() && steps.ctest.conclusion == 'failure' && inputs.execute_tests }}
+        if: ${{ failure() && steps.ctest.conclusion == 'failure' && env.EXECUTE_TESTS }}
         uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.artifact_key_prefix }}-test-artifact
           path: ${{ env.CT_RESULT_DIR }}
           retention-days: 7
-          # Fix temporaire : Plantage lors de l'utilisation de self-hosted runners si l'on n'ajoute pas ces lignes.
-          if-no-files-found: warn
-          compression-level: 6
-          overwrite: false
-          include-hidden-files: false
 
       - name: Clear dirs
         if: always()

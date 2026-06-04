@@ -124,6 +124,11 @@ on:
         # options:
         # - 'ubuntu-latest'
         # - 'm-1'
+      runner_gpu:
+        description: 'Use GPU of runner ? (true/false)'
+        type: string
+        required: false
+        default: 'false'
 
 
 env:
@@ -203,6 +208,7 @@ jobs:
     runs-on: ${{ needs.check-runner.outputs.runner-tag }}
     container:
       image: ${{inputs.image}}
+      options: ${{ case(inputs.runner_gpu == 'true', '--gpus all', '') }}
 
     steps:
       - name: Display CPU infos

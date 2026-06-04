@@ -162,7 +162,7 @@ jobs:
         id: generate-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.RUNNERS_APP_ID }}
+          client-id: ${{ secrets.RUNNERS_APP_ID }}
           private-key: ${{ secrets.RUNNERS_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 

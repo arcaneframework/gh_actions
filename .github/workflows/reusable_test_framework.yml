@@ -400,7 +400,7 @@ jobs:
           fi
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v3.5.1
+        uses: arcaneframework/gh_actions/build_install_framework@v3.6.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
@@ -424,11 +424,6 @@ jobs:
           name: ${{ inputs.artifact_key_prefix }}-log_config_build-artifact
           path: ${{ env.LOG_DIR }}
           retention-days: 7
-          # Fix temporaire : Plantage lors de l'utilisation de self-hosted runners si l'on n'ajoute pas ces lignes.
-          if-no-files-found: warn
-          compression-level: 6
-          overwrite: false
-          include-hidden-files: false
 
       - name: Display disks infos and size of directories
         shell: bash
@@ -547,11 +542,6 @@ jobs:
           name: ${{ inputs.artifact_key_prefix }}-test-artifact
           path: ${{ env.CT_RESULT_DIR }}
           retention-days: 7
-          # Fix temporaire : Plantage lors de l'utilisation de self-hosted runners si l'on n'ajoute pas ces lignes.
-          if-no-files-found: warn
-          compression-level: 6
-          overwrite: false
-          include-hidden-files: false
 
       - name: Clear dirs
         if: always()

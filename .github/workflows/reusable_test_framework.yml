@@ -472,7 +472,7 @@ jobs:
 
       # Les tests ne sont pas exécutés si on compile pour GPU mais sans GPU.
       - name: Test
-        if: ${{ env.EXECUTE_TESTS }}
+        if: "${{ env.EXECUTE_TESTS == 'true' }}"
         id: ctest
         shell: bash
         run: |
@@ -493,7 +493,7 @@ jobs:
 
       # https://www.ibm.com/docs/en/developer-for-zos/9.1.1?topic=formats-junit-xml-format
       - name: Convert the results.xml to a valid JUnit XML file
-        if: ${{ failure() && steps.ctest.conclusion == 'failure' && env.EXECUTE_TESTS }}
+        if: ${{ failure() && steps.ctest.conclusion == 'failure' && env.EXECUTE_TESTS == 'true' }}
         shell: bash
         run: |
           RESULT_ORI=${{ env.CT_RESULT_DIR }}/results.xml
@@ -536,7 +536,7 @@ jobs:
           fi
 
       - name: Upload test artifact
-        if: ${{ failure() && steps.ctest.conclusion == 'failure' && env.EXECUTE_TESTS }}
+        if: ${{ failure() && steps.ctest.conclusion == 'failure' && env.EXECUTE_TESTS == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.artifact_key_prefix }}-test-artifact

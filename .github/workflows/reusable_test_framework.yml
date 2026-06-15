@@ -142,77 +142,21 @@ env:
 
 jobs:
   check-runner:
-    # Based on: https://github.com/orgs/community/discussions/20019#discussioncomment-13391111
-    # We check whether the requested runner is available.
-    # Otherwise, we use a GH runner.
     name: 'Check runner'
-    runs-on: ubuntu-latest
-    outputs:
-      runner-tag: ${{ steps.final.outputs.runner-tag }}
-      runner-gpu: ${{ steps.final.outputs.runner-gpu }}
+    uses: 'arcaneframework/gh_actions/.github/workflows/check_runner.yml@dev/ah-check-runner-reusable'
+    secrets: inherit
+    with:
+      requested_runner_tag: ${{ inputs.runner_tag }}
+      is_requested_runner_a_gpu_runner: ${{ inputs.runner_gpu }}
 
-    steps:
-      # This step is executed if a self-hosted runner is requested.
-      # This step may fail if the secrets are not accessible (fork,
-      # for example), in this case we continue anyway (the runner
-      # will be a GH runner, see "final" step).
-      - name: Generate a token for reading available runners
-        if: "${{ inputs.runner_tag != 'ubuntu-latest' }}"
-        continue-on-error: true
-        id: generate-token
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ secrets.RUNNERS_APP_ID }}
-          private-key: ${{ secrets.RUNNERS_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      # This step is executed if a self-hosted runner is requested
-      # and if the previous step was successful.
-      # This step may fail if the app that provides us the
-      # token is not installed in the organization.
-      - name: Check available runners
-        if: "${{ inputs.runner_tag != 'ubuntu-latest' && steps.generate-token.outcome == 'success' }}"
-        continue-on-error: true
-        id: set-runner
-        env:
-           AUTH_TOKEN: ${{ steps.generate-token.outputs.token }}
-        run: |
-          runners=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $AUTH_TOKEN" "$GITHUB_API_URL/orgs/$GITHUB_REPOSITORY_OWNER/actions/runners")
-          available=$(echo "$runners" | jq '.runners[] | select(.status == "online" and .labels[].name == "${{ inputs.runner_tag }}")')
-          if [ -n "$available" ]; then
-            echo "RUNNER=${{ inputs.runner_tag }}" >> $GITHUB_ENV
-          else
-            echo "RUNNER=ubuntu-latest" >> $GITHUB_ENV
-            echo "::error::Self-hosted runner is not available, run on GH runner"
-          fi
-
-      # The self-hosted runner is chosen if it is accessible
-      # and available.
-      # Otherwise, a GH runner is used. 
-      - name: Final choose
-        id: final
-        run: |
-          if [[ "${{ inputs.runner_tag }}" == "ubuntu-latest" ]]; then
-            echo "runner-tag=ubuntu-latest" >> $GITHUB_OUTPUT
-            echo "runner-gpu=false" >> $GITHUB_OUTPUT
-            echo "::notice::The chosen runner is ubuntu-latest"
-          elif [[ "${{ steps.set-runner.outcome }}" != "success" ]]; then
-            echo "runner-tag=ubuntu-latest" >> $GITHUB_OUTPUT
-            echo "runner-gpu=false" >> $GITHUB_OUTPUT
-            echo "::warning::The selected runner is ubuntu-latest -- You requested ${{ inputs.runner_tag }} but it is not available."
-          else
-            echo "runner-tag=${{ env.RUNNER }}" >> $GITHUB_OUTPUT
-            echo "runner-gpu=${{ inputs.runner_gpu }}" >> $GITHUB_OUTPUT
-            echo "::notice::The chosen runner is ${{ env.RUNNER }}"
-          fi
 
   build-install-test:
     name: 'Build, install and test Arcane Framework'
     needs: check-runner
-    runs-on: ${{ needs.check-runner.outputs.runner-tag }}
+    runs-on: ${{ needs.check-runner.outputs.runner_tag }}
     container:
       image: ${{inputs.image}}
-      options: ${{ case(needs.check-runner.outputs.runner-gpu == 'true', '--runtime nvidia --gpus all', '') }}
+      options: ${{ case(needs.check-runner.outputs.is_a_gpu_runner == 'true', '--runtime nvidia --gpus all', '') }}
 
     steps:
       - name: Display CPU infos
@@ -235,7 +179,7 @@ jobs:
           echo "LOG_DIR=${GITHUB_WORKSPACE}/log" >> $GITHUB_ENV
           echo "CT_RESULT_DIR=${GITHUB_WORKSPACE}/test" >> $GITHUB_ENV
           if [[ "${{ inputs.use_cache }}" == "true" ]]; then
-            if [[ "${{ needs.check-runner.outputs.runner-tag }}" == "ubuntu-latest" ]]; then
+            if [[ "${{ needs.check-runner.outputs.runner_tag }}" == "ubuntu-latest" ]]; then
               echo "CCACHE_DIR=${GITHUB_WORKSPACE}/ccache" >> $GITHUB_ENV
             else
               echo "CCACHE_DIR=${GITHUB_WORKSPACE}/../ccache" >> $GITHUB_ENV
@@ -316,7 +260,7 @@ jobs:
             echo "ACC_COMPILER=acpp" >> $GITHUB_ENV
             echo "AUTO_USE_MOLD=true" >> $GITHUB_ENV
           fi
-          if [[ "${{ needs.check-runner.outputs.runner-gpu }}" == "false" ]] || [[ "${{ inputs.acc_compilo_name }}" != "cuda" ]]; then
+          if [[ "${{ needs.check-runner.outputs.is_a_gpu_runner }}" == "false" ]] || [[ "${{ inputs.acc_compilo_name }}" != "cuda" ]]; then
             echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DARCANE_EXECUTE_ACCELERATOR_GOOGLETEST=OFF" >> $GITHUB_ENV
           fi
 
@@ -337,7 +281,7 @@ jobs:
           echo "m_date=$(/bin/date -u '+%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
       - name: Get cache for ccache tool
-        if: "${{ inputs.use_cache == 'true' && needs.check-runner.outputs.runner-tag == 'ubuntu-latest' }}"
+        if: "${{ inputs.use_cache == 'true' && needs.check-runner.outputs.runner_tag == 'ubuntu-latest' }}"
         uses: actions/cache@v5
         with:
           path: ${{env.CCACHE_DIR}}
@@ -348,7 +292,7 @@ jobs:
         if: "${{ inputs.use_cache == 'true' }}"
         shell: bash
         run: |
-          if [[ "${{ needs.check-runner.outputs.runner-tag }}" == "ubuntu-latest" ]]; then
+          if [[ "${{ needs.check-runner.outputs.runner_tag }}" == "ubuntu-latest" ]]; then
             echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
           else
             echo "CCACHE_MAXSIZE=10G" >> $GITHUB_ENV
@@ -400,7 +344,7 @@ jobs:
           fi
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v3.6.0
+        uses: arcaneframework/gh_actions/build_install_framework@dev/ah-check-runner-reusable
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
@@ -461,7 +405,7 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ inputs.execute_tests }}" == "true" ]]; then
-            if [[ "${{ inputs.runner_gpu }}" == "false" ]] || [[ "${{ needs.check-runner.outputs.runner-gpu }}" == "true" ]]; then
+            if [[ "${{ inputs.runner_gpu }}" == "false" ]] || [[ "${{ needs.check-runner.outputs.is_a_gpu_runner }}" == "true" ]]; then
               echo "EXECUTE_TESTS=true" >> $GITHUB_ENV
             else
               echo "EXECUTE_TESTS=false" >> $GITHUB_ENV

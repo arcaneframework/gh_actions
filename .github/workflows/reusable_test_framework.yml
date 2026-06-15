@@ -143,7 +143,7 @@ env:
 jobs:
   check-runner:
     name: 'Check runner'
-    uses: 'arcaneframework/gh_actions/.github/workflows/check_runner.yml@dev/ah-check-runner-reusable'
+    uses: 'arcaneframework/gh_actions/.github/workflows/check_runner.yml@v3.7.0'
     secrets: inherit
     with:
       requested_runner_tag: ${{ inputs.runner_tag }}
@@ -344,7 +344,7 @@ jobs:
           fi
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@dev/ah-check-runner-reusable
+        uses: arcaneframework/gh_actions/build_install_framework@v3.7.0
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}

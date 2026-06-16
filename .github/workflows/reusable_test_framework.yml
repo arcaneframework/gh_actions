@@ -420,6 +420,7 @@ jobs:
         id: ctest
         shell: bash
         run: |
+          [ -f /root/scripts/config_env.sh ] && source /root/scripts/config_env.sh
           mkdir -p ${{ env.CT_RESULT_DIR }}
           if [[ "${{ inputs.ctest_output_on_failure }}" == "true" ]]; then
             CT_ARGS="--output-on-failure"

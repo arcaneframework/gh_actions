@@ -139,6 +139,7 @@ env:
   OMPI_MCA_rmaps_base_oversubscribe : true
   PRTE_MCA_rmaps_default_mapping_policy : ':oversubscribe'
   ASAN_OPTIONS: 'detect_leaks=false'
+  ARCANE_USE_BACKWARDCPP: 1
   
 
 jobs:

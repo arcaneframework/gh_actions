@@ -233,6 +233,7 @@ jobs:
         if: "${{ inputs.acc_compilo_name != '' }}"
         shell: bash
         run: |
+          CMAKE_ADD_ARGS=""
           if [[ "${{ inputs.acc_compilo_name }}" == "cuda" ]]; then
             echo "ACC_COMPILER=nvcc" >> $GITHUB_ENV
             echo "AUTO_USE_MOLD=true" >> $GITHUB_ENV
@@ -252,7 +253,7 @@ jobs:
           elif [[ "${{ inputs.acc_compilo_name }}" == "rocm" ]]; then
             echo "ACC_COMPILER=amdclang" >> $GITHUB_ENV
             echo "AUTO_USE_MOLD=false" >> $GITHUB_ENV
-            echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DCMAKE_PREFIX_PATH=/opt/rocm" >> $GITHUB_ENV
+            CMAKE_ADD_ARGS="-DCMAKE_PREFIX_PATH=/opt/rocm"
             if [[ "${{ inputs.acc_compilo_version }}" == "" ]]; then
               source /root/scripts/use_rocm.sh
             else
@@ -261,9 +262,10 @@ jobs:
           elif [[ "${{ inputs.acc_compilo_name }}" == "acpp" ]]; then
             echo "ACC_COMPILER=acpp" >> $GITHUB_ENV
             echo "AUTO_USE_MOLD=true" >> $GITHUB_ENV
+            CMAKE_ADD_ARGS="-DARCANE_CXX_SYCL_FLAGS='--acpp-targets=cuda:sm_89'"
           fi
           if [[ "${{ needs.check-runner.outputs.is_a_gpu_runner }}" == "false" ]] || [[ "${{ inputs.acc_compilo_name }}" != "cuda" ]]; then
-            echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} -DARCANE_EXECUTE_ACCELERATOR_GOOGLETEST=OFF" >> $GITHUB_ENV
+            echo "CMAKE_ADD_ARGS=${{ env.CMAKE_ADD_ARGS }} ${CMAKE_ADD_ARGS} -DARCANE_EXECUTE_ACCELERATOR_GOOGLETEST=OFF" >> $GITHUB_ENV
           fi
 
       - name: Set MOLD

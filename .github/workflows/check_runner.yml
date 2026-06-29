@@ -73,7 +73,11 @@ jobs:
       - name: Final choose
         id: final
         run: |
-          if [[ "${{ inputs.requested_runner_tag }}" == "ubuntu-latest" ]]; then
+          if [[ "${{ vars.FORCE_USE_GH_RUNNERS }}" == "TRUE" ]]; then
+            echo "runner_tag=ubuntu-latest" >> $GITHUB_OUTPUT
+            echo "is_a_gpu_runner=false" >> $GITHUB_OUTPUT
+            echo "::notice::The selected runner is ubuntu-latest. Forced with global environment variable FORCE_USE_GH_RUNNERS."
+          elif [[ "${{ inputs.requested_runner_tag }}" == "ubuntu-latest" ]]; then
             echo "runner_tag=ubuntu-latest" >> $GITHUB_OUTPUT
             echo "is_a_gpu_runner=false" >> $GITHUB_OUTPUT
             echo "::notice::The chosen runner is ubuntu-latest"

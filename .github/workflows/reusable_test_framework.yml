@@ -158,7 +158,8 @@ jobs:
     runs-on: ${{ needs.check-runner.outputs.runner_tag }}
     container:
       image: ${{inputs.image}}
-      options: ${{ case(needs.check-runner.outputs.is_a_gpu_runner == 'true', '--runtime nvidia --gpus all', '') }}
+      options: |
+        ${{ case(needs.check-runner.outputs.is_a_gpu_runner == 'true', '--runtime nvidia --gpus all', '') }} ${{ case(inputs.use_cache == 'true' && inputs.runner_tag != 'ubuntu-latest', '-v "/opt/ccache":"/ccache"', '') }}
 
     steps:
       - name: Display CPU infos
@@ -184,7 +185,7 @@ jobs:
             if [[ "${{ needs.check-runner.outputs.runner_tag }}" == "ubuntu-latest" ]]; then
               echo "CCACHE_DIR=${GITHUB_WORKSPACE}/ccache" >> $GITHUB_ENV
             else
-              echo "CCACHE_DIR=${GITHUB_WORKSPACE}/../ccache" >> $GITHUB_ENV
+              echo "CCACHE_DIR=/ccache" >> $GITHUB_ENV
             fi
           else
             echo "CCACHE_DIR=" >> $GITHUB_ENV
@@ -203,7 +204,7 @@ jobs:
             ${{ env.INSTALL_DIR }} \
             ${{ env.LOG_DIR }} \
             ${{ env.CT_RESULT_DIR }} 
-          if [[ "${{ inputs.use_cache }}" == "true" ]] && [[ ! -e ${{ env.CCACHE_DIR }} ]]; then
+          if [[ "${{ inputs.use_cache }}" == "true" ]] && [[ ! -e "${{ env.CCACHE_DIR }}" ]]; then
             mkdir -p ${{ env.CCACHE_DIR }}
           fi
 

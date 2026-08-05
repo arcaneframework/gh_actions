@@ -62,8 +62,10 @@ jobs:
           available=$(echo "$runners" | jq '.runners[] | select(.status == "online" and .labels[].name == "${{ inputs.requested_runner_tag }}")')
           if [ -n "$available" ]; then
             echo "RUNNER=${{ inputs.requested_runner_tag }}" >> $GITHUB_ENV
+            echo "USE_GPU=${{ inputs.is_requested_runner_a_gpu_runner }}" >> $GITHUB_ENV
           else
             echo "RUNNER=ubuntu-latest" >> $GITHUB_ENV
+            echo "USE_GPU=false" >> $GITHUB_ENV
             echo "::error::Self-hosted runner is not available, run on GH runner"
           fi
 
@@ -77,16 +79,12 @@ jobs:
             echo "runner_tag=ubuntu-latest" >> $GITHUB_OUTPUT
             echo "is_a_gpu_runner=false" >> $GITHUB_OUTPUT
             echo "::notice::The selected runner is ubuntu-latest. Forced with global environment variable FORCE_USE_GH_RUNNERS."
-          elif [[ "${{ inputs.requested_runner_tag }}" == "ubuntu-latest" ]]; then
-            echo "runner_tag=ubuntu-latest" >> $GITHUB_OUTPUT
-            echo "is_a_gpu_runner=false" >> $GITHUB_OUTPUT
-            echo "::notice::The chosen runner is ubuntu-latest"
           elif [[ "${{ steps.set-runner.outcome }}" != "success" ]]; then
             echo "runner_tag=ubuntu-latest" >> $GITHUB_OUTPUT
             echo "is_a_gpu_runner=false" >> $GITHUB_OUTPUT
             echo "::warning::The selected runner is ubuntu-latest -- You requested ${{ inputs.requested_runner_tag }} but it is not available."
           else
             echo "runner_tag=${{ env.RUNNER }}" >> $GITHUB_OUTPUT
-            echo "is_a_gpu_runner=${{ inputs.is_requested_runner_a_gpu_runner }}" >> $GITHUB_OUTPUT
+            echo "is_a_gpu_runner=${{ env.USE_GPU }}" >> $GITHUB_OUTPUT
             echo "::notice::The chosen runner is ${{ env.RUNNER }}"
           fi

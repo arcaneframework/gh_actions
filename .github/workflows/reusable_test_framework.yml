@@ -136,8 +136,10 @@ env:
   OMPI_ALLOW_RUN_AS_ROOT: 1
   OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
   # To tell OpenMPI we may use more processus than available cores
-  OMPI_MCA_rmaps_base_oversubscribe : true
-  PRTE_MCA_rmaps_default_mapping_policy : ':oversubscribe'
+  OMPI_MCA_rmaps_base_oversubscribe: true
+  PRTE_MCA_rmaps_default_mapping_policy: ':oversubscribe'
+  OMPI_MCA_mpi_yield_when_idle: 1
+  PRTE_MCA_mpi_yield_when_idle: 1
   ASAN_OPTIONS: 'detect_leaks=false'
   ARCANE_USE_BACKWARDCPP: 1
   
@@ -145,7 +147,7 @@ env:
 jobs:
   check-runner:
     name: 'Check runner'
-    uses: 'arcaneframework/gh_actions/.github/workflows/check_runner.yml@v3.7.7'
+    uses: 'arcaneframework/gh_actions/.github/workflows/check_runner.yml@v3.7.8'
     secrets: inherit
     with:
       requested_runner_tag: ${{ inputs.runner_tag }}
@@ -349,7 +351,7 @@ jobs:
           fi
 
       - name: Build and install framework
-        uses: arcaneframework/gh_actions/build_install_framework@v3.7.7
+        uses: arcaneframework/gh_actions/build_install_framework@v3.7.8
         with:
           source_dir: ${{ env.SOURCE_DIR }}
           build_dir: ${{ env.BUILD_DIR }}
